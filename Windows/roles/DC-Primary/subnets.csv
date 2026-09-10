@@ -1,0 +1,11 @@
+subnet,site_name,description,location
+10.0.10.0/24,Middelfart,Server Net,
+10.0.20.0/24,Middelfart,Client Net,
+10.0.30.0/24,Middelfart,Backup Net,
+10.0.40.0/24,Middelfart,DMZ Net,
+10.0.99.0/24,Middelfart,Management Net,
+10.10.10.0/24,Odense,Server Net,
+10.10.20.0/24,Odense,Client Net,
+10.10.30.0/24,Odense,Backup Net,
+10.10.40.0/24,Odense,DMZ Net,
+10.10.99.0/24,Odense,Management Net,

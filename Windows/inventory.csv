@@ -1,0 +1,7 @@
+name,vmid,ip,pve,node,roles
+SRV-ADDS-01,110,10.0.10.10,PROD-1,pve1,BaseServer;DC-Primary;OU-Structure
+SRV-ADDS-02,111,10.0.10.11,PROD-1,pve2,BaseServer;DC-Secondary
+SRV-DHCP-01,120,10.0.10.20,PROD-1,pve2,BaseServer;DomainJoin;DHCP
+SRV-DHCP-02,121,10.0.10.21,PROD-1,pve3,BaseServer;DomainJoin;DHCP
+SRV-FILE-01,115,10.0.10.15,PROD-1,pve1,BaseServer;DomainJoin;FileServer
+SRV-VEEAM-01,125,10.0.10.25,BACKUP-1,,BaseServer;DomainJoin
