@@ -1,4 +1,4 @@
-hostname NW-TSW-EDGE-DC1-01
+hostname NW-TSW-EDGE-DC2-01
 
 no ip domain lookup
 banner motd "Unauthorized access is prohibited"
@@ -6,7 +6,7 @@ service password-encryption
 username cisco secret cisco
 
 int vlan 99
-ip address 10.10.99.6 255.255.255.0
+ip address 10.10.99.8 255.255.255.0
 exit
 
 ip domain-name mfrace.internal
@@ -26,3 +26,17 @@ login local
 end
 
 wr
+
+no username cisco secret cisco
+username cisco privilege 15 secret cisco
+
+
+
+default interface g1/0/1
+default interface g1/0/2
+
+Interface range g1/0/1-2
+switchport mode access
+
+
+

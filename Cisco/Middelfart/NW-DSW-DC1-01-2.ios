@@ -6,7 +6,7 @@ service password-encryption
 username cisco secret cisco
 
 int vlan 99
-ip address 10.0.99.3 255.255.255.0
+ip address 10.0.99.5 255.255.255.0
 exit
 
 ip domain-name mfrace.internal
@@ -23,6 +23,13 @@ line console 0
 password cisco
 exec-timeout 0
 login local
+
+
+switch 1 renumber 2
+! reload the switch to apply the new stack number
+!
+switch 2 priority 14
+
 end
 
 wr

@@ -1,0 +1,149 @@
+hostname NW-DSW-DC1-STACK
+
+no username cisco secret cisco
+username cisco privilege 15 secret cisco
+
+spanning-tree portfast default
+VTP mode transparent
+
+Vlan 10
+name Servere
+
+Vlan 20
+name Klienter
+
+Vlan 30
+name Backup
+
+Vlan 40
+name DMZ
+
+Vlan 99
+name Management
+
+Vlan 555
+name Registraion
+
+Vlan 666
+name Jail
+
+Vlan 999
+name Blackhole
+
+Vlan 1000
+name CEPH
+
+Vlan 1010
+name Corosync0
+
+Vlan 1011
+name Corosync1
+
+int vlan 99
+ip address 10.0.99.4 255.255.255.0
+exit
+
+interface port-channel 1
+description "HYP-PVE-DC-01-1 | Bond0"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+interface port-channel 2
+description "HYP-PVE-DC1-01 | Bond1 CEPH"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk allowed vlan 1000
+
+interface port-channel 4
+description "HYP-PVE-DC1-01-2 | Bond0"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+interface port-channel 5
+description "HYP-PVE-DC1-01-2 | Bond1 CEPH"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk allowed vlan 1000
+
+interface port-channel 7
+description "HYP-PVE-DC1-01-3 | Bond0"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+interface port-channel 8
+description "HYP-PVE-DC1-01-2 | Bond1 CEPH"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk allowed vlan 1000
+
+interface port-channel 45
+description "NW-ASW-DC1-01 | Port g1/0/47-48"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+interface port-channel 44
+description "HYP-PVE-BKP-DC1-01 | Bond0"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk allowed vlan 20,40,99
+
+interface port-channel 46
+description "NW-OOB-DC1-01 | Port g1/0/23-24"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+interface port-channel 47
+description "NW-FW-EDGE-DC1-02 | Port eth1-2"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+interface port-channel 48
+description "NW-FW-EDGE-DC1-01 | Port eth1-2"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+Interface range g1/0/48, g2/0/48
+channel-protocol lacp
+channel-group 48 mode active
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+Interface range g1/0/47, g2/0/47
+channel-protocol lacp
+channel-group 47 mode active
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+Interface range g1/0/46, g2/0/46
+channel-protocol lacp
+channel-group 46 mode active
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+Interface range g1/0/45, g2/0/45
+channel-protocol lacp
+channel-group 45 mode active
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99

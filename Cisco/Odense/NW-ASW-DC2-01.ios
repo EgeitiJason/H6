@@ -6,7 +6,7 @@ service password-encryption
 username cisco secret cisco
 
 int vlan 99
-ip address 10.10.99.4 255.255.255.0
+ip address 10.10.99.6 255.255.255.0
 exit
 
 ip domain-name mfrace.internal
@@ -26,3 +26,27 @@ login local
 end
 
 wr
+
+no username cisco secret cisco
+username cisco privilege 15 secret cisco
+
+spanning-tree portfast default
+VTP mode transparent
+
+interface port-channel 24
+description "NW-DSW-DC2-01-1 | Port g1/0/45, g2/0/45"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+
+Interface range g1/0/1-46
+switchport mode access
+switchport access vlan 99
+
+Interface range g1/0/47-48
+channel-protocol lacp
+channel-group 24 mode active
+switchport trunk native vlan 999
+switchport trunk allowed vlan 10,20,30,40,99
+

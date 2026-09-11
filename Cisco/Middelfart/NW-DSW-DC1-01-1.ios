@@ -6,7 +6,7 @@ service password-encryption
 username cisco secret cisco
 
 int vlan 99
-ip address 10.0.99.2 255.255.255.0
+ip address 10.0.99.4 255.255.255.0
 exit
 
 ip domain-name mfrace.internal
@@ -25,4 +25,7 @@ exec-timeout 0
 login local
 end
 
+switch 1 priority 15
+
 wr
+
