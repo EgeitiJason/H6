@@ -23,11 +23,14 @@ check "BACKUP-1 template" "9000" "$(tmpl BACKUP-1)"
 # --- inventory rows
 rows() { tail -n +2 inventory.csv; }
 check "host count" "6" "$(rows | wc -l)"
-check "PROD-1 rows"   "5" "$(rows | awk -F, '$4=="PROD-1"'   | wc -l)"
-check "BACKUP-1 rows" "1" "$(rows | awk -F, '$4=="BACKUP-1"' | wc -l)"
+check "PROD-1 rows"   "5" "$(rows | awk -F, '$3=="PROD-1"'   | wc -l)"
+check "BACKUP-1 rows" "1" "$(rows | awk -F, '$3=="BACKUP-1"' | wc -l)"
+# Name is the key pve-bootstrap.sh clones against - a duplicate collapses two
+# hosts onto one VM.
+check "unique names" "6" "$(rows | cut -d, -f1 | sort -u | wc -l)"
 
 # Role order within a cell is execution order - it must survive parsing intact.
-roles_of() { rows | awk -F, -v n="$1" '$1==n {print $6}'; }
+roles_of() { rows | awk -F, -v n="$1" '$1==n {print $5}'; }
 IFS=';' read -ra r <<< "$(roles_of SRV-ADDS-01)"
 check "ADDS-01 role count" "3" "${#r[@]}"
 check "ADDS-01 first role" "BaseServer" "${r[0]}"
@@ -52,7 +55,7 @@ for h in SRV-DHCP-01 SRV-DHCP-02 SRV-FILE-01 SRV-VEEAM-01; do
 done
 
 # Every role named in the inventory must actually exist on disk.
-rows | cut -d, -f6 | tr ';' '\n' | sort -u | while read -r role; do
+rows | cut -d, -f5 | tr ';' '\n' | sort -u | while read -r role; do
     [ -f "roles/$role/Install.ps1" ] && echo "ok   role $role exists" \
         || { echo "FAIL role $role has no Install.ps1"; exit 1; }
 done || fail=1

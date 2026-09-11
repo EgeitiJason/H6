@@ -74,6 +74,11 @@ no resolver, no graph. `SRV-ADDS-02` must follow `-01` because you cannot
 promote a replica into a forest that does not exist, and `SRV-DHCP-02` must
 follow `-01` because it receives its scopes by failover replication.
 
+vmids are not recorded. `pve-bootstrap.sh` matches each row by VM name across
+the cluster and allocates a fresh id from `/cluster/nextid` for anything
+missing, so re-running it is safe — and renaming a host in the CSV builds a new
+VM rather than touching the old one.
+
 ### Adding a role
 
 Three rules, and that's the whole framework:

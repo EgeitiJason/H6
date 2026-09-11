@@ -31,24 +31,40 @@ if [ -z "$PUBKEY" ]; then
 fi
 : "${PUBKEY:?set PUBKEY, or serve your public key as id_pubkey next to this script}"
 
-while IFS=, read -r name vmid ip pve node roles; do
+# The VM name is the identity - vmids are allocated, never recorded. Cluster-wide,
+# so a VM cloned to another node on a previous run is still found from here.
+find_vm() { # name -> "vmid node", empty when absent
+    NAME="$1" pvesh get /cluster/resources --type vm --output-format json |
+        perl -MJSON::PP -0777 -ne 'for (@{decode_json($_)}) {
+            next unless ($_->{name} // "") eq $ENV{NAME};
+            print "$_->{vmid} $_->{node}\n"; last }'
+}
+
+while IFS=, read -r name ip pve node roles; do
     [ "$name" = "name" ] && continue
     [ "$pve" = "$PVE" ] || continue
 
-    if qm status "$vmid" >/dev/null 2>&1; then
-        echo "== $name ($vmid) already exists, skipping clone"
+    read -r vmid found_node < <(find_vm "$name")
+    if [ -n "$vmid" ]; then
+        # Where it actually is beats where the inventory wanted it - the node
+        # column is a placement preference for the first clone, nothing more.
+        echo "== $name ($vmid) already exists on $found_node, skipping clone"
+        TARGET_NODE="$found_node"
     else
+        vmid="$(pvesh get /cluster/nextid)"
+        TARGET_NODE="${node:-$NODE}"
         echo "== $name ($vmid): cloning from template $TEMPLATE"
+        # --name is what makes the lookup above work on the next run.
         # --target only applies in a cluster, and only when it differs from here.
-        if [ -n "$node" ] && [ "$node" != "$NODE" ]; then
-            qm clone "$TEMPLATE" "$vmid" --name "$name" --full --target "$node"
+        if [ "$TARGET_NODE" != "$NODE" ]; then
+            qm clone "$TEMPLATE" "$vmid" --name "$name" --full --target "$TARGET_NODE"
         else
             qm clone "$TEMPLATE" "$vmid" --name "$name" --full
         fi
     fi
 
-    TARGET_NODE="${node:-$NODE}"
-    qm start "$vmid" 2>/dev/null || true
+    # Via the API, not qm: the VM may well live on another node.
+    pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/status/start" >/dev/null 2>&1 || true
 
     echo "-- waiting for guest agent on $name"
     for _ in $(seq 1 60); do
@@ -60,11 +76,18 @@ while IFS=, read -r name vmid ip pve node roles; do
     pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/agent/file-write" \
         --file 'C:\bootstrap.ps1' --content "$(cat "$WORK/bootstrap.ps1")"
 
-    # --synchronous 0: bootstrap.ps1 ends in a reboot, so it can never return.
-    qm guest exec "$vmid" --synchronous 0 -- \
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\bootstrap.ps1' \
-        -IPAddress "$ip" -Gateway "$GATEWAY" -Hostname "$name" \
-        -DnsServer "$DNS" -PublicKey "$PUBKEY"
+    # The API takes argv as repeated --command values, and is async by default -
+    # which is what we need: bootstrap.ps1 ends in a reboot, so it can never return.
+    pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/agent/exec" \
+        --command powershell.exe \
+        --command -NoProfile \
+        --command -ExecutionPolicy --command Bypass \
+        --command -File --command 'C:\bootstrap.ps1' \
+        --command -IPAddress --command "$ip" \
+        --command -Gateway --command "$GATEWAY" \
+        --command -Hostname --command "$name" \
+        --command -DnsServer --command "$DNS" \
+        --command -PublicKey --command "$PUBKEY"
 
     echo "== $name bootstrapped, will come up on $ip"
 done < "$WORK/inventory.csv"
