@@ -13,7 +13,6 @@ check() { # check <label> <expected> <actual>
 # --- config.psd1 scalar extraction, as pve-bootstrap.sh does it
 psd_value() { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" config.psd1; }
 check "PrimaryDCIP"  "10.0.10.10"       "$(psd_value PrimaryDCIP)"
-check "Gateway"      "10.0.10.1"        "$(psd_value Gateway)"
 check "DomainName"   "mfrace.internal"  "$(psd_value DomainName)"
 
 tmpl() { sed -n "s/^[[:space:]]*'$1'[[:space:]]*=[[:space:]]*\([0-9]\+\).*/\1/p" config.psd1; }
@@ -28,6 +27,11 @@ check "BACKUP-1 rows" "1" "$(rows | awk -F, '$3=="BACKUP-1"' | wc -l)"
 # Name is the key pve-bootstrap.sh clones against - a duplicate collapses two
 # hosts onto one VM.
 check "unique names" "6" "$(rows | cut -d, -f1 | sort -u | wc -l)"
+
+# vlan tags net0 on the bridge; the gateway is derived as <ip>.1, so the IP
+# must sit in the matching 10.0.<vlan>.0/24 or the host comes up unrouted.
+check "vlan matches subnet" "" "$(rows | awk -F, '$2 !~ "^10\\.0\\." $6 "\\." {print $1}')"
+check "VEEAM on vlan 30" "30" "$(rows | awk -F, '$1=="SRV-VEEAM-01" {print $6}')"
 
 # Role order within a cell is execution order - it must survive parsing intact.
 roles_of() { rows | awk -F, -v n="$1" '$1==n {print $5}'; }

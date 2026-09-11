@@ -51,7 +51,7 @@ run_role() {
     done
 }
 
-while IFS=, read -r name ip pve node roles; do
+while IFS=, read -r name ip pve node roles vlan; do
     [ "$name" = "name" ] && continue
     [ -n "$ONLY_HOST" ] && [ "$name" != "$ONLY_HOST" ] && continue
 

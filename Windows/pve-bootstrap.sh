@@ -18,9 +18,8 @@ curl -sf "$SRC/inventory.csv"  -o "$WORK/inventory.csv"
 curl -sf "$SRC/bootstrap.ps1"  -o "$WORK/bootstrap.ps1"
 curl -sf "$SRC/config.psd1"    -o "$WORK/config.psd1"
 
-# config.psd1 is PowerShell, but the three values we need are plain scalars.
+# config.psd1 is PowerShell, but the values we need are plain scalars.
 psd_value() { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" "$WORK/config.psd1"; }
-GATEWAY="$(psd_value Gateway)"
 DNS="$(psd_value PrimaryDCIP)"
 TEMPLATE="${TEMPLATE:-$(sed -n "s/^[[:space:]]*'$PVE'[[:space:]]*=[[:space:]]*\([0-9]\+\).*/\1/p" "$WORK/config.psd1")}"
 : "${TEMPLATE:?no template vmid for $PVE in config.psd1 Templates}"
@@ -40,7 +39,7 @@ find_vm() { # name -> "vmid node", empty when absent
             print "$_->{vmid} $_->{node}\n"; last }'
 }
 
-while IFS=, read -r name ip pve node roles; do
+while IFS=, read -r name ip pve node roles vlan; do
     [ "$name" = "name" ] && continue
     [ "$pve" = "$PVE" ] || continue
 
@@ -63,7 +62,13 @@ while IFS=, read -r name ip pve node roles; do
         fi
     fi
 
-    # Via the API, not qm: the VM may well live on another node.
+    # Via the API, not qm: the VM may well live on another node. Rewrite net0
+    # rather than setting it fresh, or Proxmox hands out a new MAC.
+    net0="$(pvesh get "/nodes/$TARGET_NODE/qemu/$vmid/config" --output-format json |
+        perl -MJSON::PP -0777 -ne 'print decode_json($_)->{net0}')"
+    pvesh set "/nodes/$TARGET_NODE/qemu/$vmid/config" \
+        --net0 "$(sed 's/,tag=[0-9]*//' <<< "$net0"),tag=$vlan"
+
     pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/status/start" >/dev/null 2>&1 || true
 
     echo "-- waiting for guest agent on $name"
@@ -84,7 +89,7 @@ while IFS=, read -r name ip pve node roles; do
         --command -ExecutionPolicy --command Bypass \
         --command -File --command 'C:\bootstrap.ps1' \
         --command -IPAddress --command "$ip" \
-        --command -Gateway --command "$GATEWAY" \
+        --command -Gateway --command "${ip%.*}.1" \
         --command -Hostname --command "$name" \
         --command -DnsServer --command "$DNS" \
         --command -PublicKey --command "$PUBKEY"

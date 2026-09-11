@@ -1,7 +1,7 @@
-name,ip,pve,node,roles
-SRV-ADDS-01,10.0.10.10,PROD-1,pve1,BaseServer;DC-Primary;OU-Structure
-SRV-ADDS-02,10.0.10.11,PROD-1,pve2,BaseServer;DC-Secondary
-SRV-DHCP-01,10.0.10.20,PROD-1,pve2,BaseServer;DomainJoin;DHCP
-SRV-DHCP-02,10.0.10.21,PROD-1,pve3,BaseServer;DomainJoin;DHCP
-SRV-FILE-01,10.0.10.15,PROD-1,pve1,BaseServer;DomainJoin;FileServer
-SRV-VEEAM-01,10.0.10.25,BACKUP-1,,BaseServer;DomainJoin
+name,ip,pve,node,roles,vlan
+SRV-ADDS-01,10.0.10.10,PROD-1,pve1,BaseServer;DC-Primary;OU-Structure,10
+SRV-ADDS-02,10.0.10.11,PROD-1,pve2,BaseServer;DC-Secondary,10
+SRV-DHCP-01,10.0.10.20,PROD-1,pve2,BaseServer;DomainJoin;DHCP,10
+SRV-DHCP-02,10.0.10.21,PROD-1,pve3,BaseServer;DomainJoin;DHCP,10
+SRV-FILE-01,10.0.10.15,PROD-1,pve1,BaseServer;DomainJoin;FileServer,10
+SRV-VEEAM-01,10.0.30.10,BACKUP-1,,BaseServer;DomainJoin,30
