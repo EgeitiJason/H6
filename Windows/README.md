@@ -20,7 +20,10 @@ ever, not once per server.
 1. Install Windows Server on a VM with virtio disk and NIC.
 2. Install `virtio-win-guest-tools.exe` — the same package as the storage and
    network drivers, and it contains the guest agent.
-3. `sysprep /generalize /oobe /shutdown`
+3. Copy [`unattend.xml`](unattend.xml) to `C:\unattend.xml`, set the
+   Administrator password in it, then
+   `sysprep /generalize /oobe /shutdown /unattend:C:\unattend.xml` — without
+   it every clone stops at the OOBE password screen and the agent never starts.
 4. `qm set <vmid> --agent 1`, then convert to a template.
 
 Record its vmid in `config.psd1` under `Templates`. PROD-1's copy must live on
