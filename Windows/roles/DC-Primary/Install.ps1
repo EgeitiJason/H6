@@ -91,48 +91,14 @@ foreach ($Site in $Config.Sites) {
     }
 }
 
-function New-ADSubnet {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
-        [string]$Subnet,
-
-        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
-        [string]$SiteName,
-
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [string]$Description,
-
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [string]$Location
-    )
-
-    process {
-        try {
-            $ErrorActionPreference = 'Stop'
-
-            $Configuration = ([ADSI]"LDAP://RootDSE").configurationNamingContext
-            $SubnetsContainer = [ADSI]"LDAP://CN=Subnets,CN=Sites,$Configuration"
-
-            if (Get-ADReplicationSubnet -Filter "Name -eq '$Subnet'" -ErrorAction SilentlyContinue) {
-                Write-Host "Subnet $Subnet already exists"
-                return
-            }
-
-            $SubnetObject = $SubnetsContainer.Create('subnet', "CN=$Subnet")
-            $SubnetObject.Put("siteObject", "CN=$SiteName,CN=Sites,$Configuration")
-
-            if ($Description) { $SubnetObject.Put("description", $Description) }
-            if ($Location)    { $SubnetObject.Put("location", $Location) }
-
-            $SubnetObject.SetInfo()
-            Write-Host "Subnet $Subnet added to $SiteName"
-        }
-        catch {
-            Write-Warning "Failed creating subnet $Subnet"
-            $_.Exception.Message
-        }
+foreach ($Entry in $Subnets) {
+    if (Get-ADReplicationSubnet -Filter "Name -eq '$($Entry.subnet)'") {
+        Write-Host "Subnet $($Entry.subnet) already exists"
+        continue
     }
+    $Params = @{ Name = $Entry.subnet; Site = $Entry.site_name }
+    if ($Entry.description) { $Params.Description = $Entry.description }
+    if ($Entry.location)    { $Params.Location    = $Entry.location }
+    New-ADReplicationSubnet @Params
+    Write-Host "Subnet $($Entry.subnet) added to $($Entry.site_name)"
 }
-
-$Subnets | New-ADSubnet
