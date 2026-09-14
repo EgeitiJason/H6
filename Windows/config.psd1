@@ -13,7 +13,8 @@
     # Template each PVE datacenter clones from. Must exist on shared storage
     # for a cluster, local storage for a standalone host.
     Templates    = @{
-        'PROD-1'   = 9000
+        'PROD-1'   = 103
         'BACKUP-1' = 9000
+        'BACKUP-2' = 9000
     }
 }
