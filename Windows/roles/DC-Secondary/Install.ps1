@@ -35,3 +35,4 @@ Install-ADDSDomainController -InstallDns `
     -SiteName $Site `
     -Credential $Credential `
     -SafeModeAdministratorPassword $Password -Force
+exit 3010   # reboot pending - deploy.sh waits for it

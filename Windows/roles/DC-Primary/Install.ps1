@@ -22,7 +22,8 @@ if (-not (Get-WindowsFeature -Name AD-Domain-Services).Installed) {
     Import-Module ADDSDeployment
     Install-ADDSForest -DomainName $Config.DomainName `
         -SafeModeAdministratorPassword $Password -Force
-    return
+    # It returns before the reboot starts; 3010 tells deploy.sh to wait it out.
+    exit 3010
 }
 Write-Host "AD-Domain-Services already installed"
 

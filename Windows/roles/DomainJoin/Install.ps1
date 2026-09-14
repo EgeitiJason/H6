@@ -27,3 +27,4 @@ Write-Host "Joining $($Config.DomainName)"
 Add-Computer -DomainName $Config.DomainName `
     -OUPath "OU=Servers,$($Config.OUBase)" `
     -Credential $Credential -Restart -Force
+exit 3010   # reboot pending - deploy.sh waits for it
