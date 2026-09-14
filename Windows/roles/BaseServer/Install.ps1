@@ -35,7 +35,9 @@ $PossibleDrives = [char[]](68..90)   # D..Z
 $UsedDrives = { (Get-Volume).DriveLetter | Where-Object { $_ } }
 
 Get-CimInstance -ClassName Win32_Volume -Filter "DriveType = 5" | ForEach-Object {
-    $Free = $PossibleDrives | Where-Object { $_ -notin (& $UsedDrives) } | Select-Object -Last 1
+    # The drive's own letter counts as free, or every run shifts it down one.
+    $Current = $_.DriveLetter
+    $Free = $PossibleDrives | Where-Object { $_ -notin (& $UsedDrives) -or "${_}:" -eq $Current } | Select-Object -Last 1
     if ($Free -and $_.DriveLetter -ne "${Free}:") {
         Write-Host "Moving optical drive $($_.DriveLetter) to ${Free}:"
         $_ | Set-CimInstance -Property @{ DriveLetter = "${Free}:" }
