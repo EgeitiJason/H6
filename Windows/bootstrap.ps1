@@ -22,17 +22,21 @@ if ((Get-WindowsCapability -Online -Name 'OpenSSH.Server*').State -ne 'Installed
     Write-Host "Installing OpenSSH Server"
     Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 }
+# The shipped rule only covers Private, but an unjoined server sits on Public.
+Set-NetFirewallRule -Name OpenSSH-Server-In-TCP -Profile Any
 Set-Service -Name sshd -StartupType Automatic
 Start-Service -Name sshd
 
 # 2. PowerShell subsystem: this is what makes Enter-PSSession -HostName work,
-#    as opposed to merely `ssh host powershell -File`.
+#    as opposed to merely `ssh host powershell -File`. It must sit next to the
+#    global sftp line: appended at EOF it lands inside the trailing
+#    `Match Group administrators` block, where (OpenSSH >= 9.5) it replaces the
+#    sftp subsystem for admins and breaks scp.
 $SshdConfig = 'C:\ProgramData\ssh\sshd_config'
 $Subsystem  = 'Subsystem powershell powershell.exe -sshs -NoLogo -NoProfile'
-if (-not (Select-String -Path $SshdConfig -Pattern 'Subsystem\s+powershell' -Quiet)) {
-    Add-Content -Path $SshdConfig -Value $Subsystem
-    Write-Host "Added powershell subsystem to sshd_config"
-}
+$lines = Get-Content $SshdConfig | Where-Object { $_ -notmatch '^\s*Subsystem\s+powershell' }
+$lines = $lines | ForEach-Object { $_; if ($_ -match '^\s*Subsystem\s+sftp') { $Subsystem } }
+Set-Content -Path $SshdConfig -Value $lines -Encoding ascii
 
 # 3. Authorized key. Admins use this machine-scoped file, not ~\.ssh, and sshd
 #    ignores it silently unless only SYSTEM and Administrators can write it.
