@@ -42,8 +42,8 @@ echo "-- template $TEMPLATE, dns $DNS"
 # The VM name is the identity - vmids are allocated, never recorded. Cluster-wide,
 # so a VM cloned to another node on a previous run is still found from here.
 find_vm() { # name -> "vmid node", empty when absent
-    NAME="$1" pvesh get /cluster/resources --type vm --output-format json |
-        perl -MJSON::PP -0777 -ne 'for (@{decode_json($_)}) {
+    pvesh get /cluster/resources --type vm --output-format json |
+        NAME="$1" perl -MJSON::PP -0777 -ne 'for (@{decode_json($_)}) {
             next unless ($_->{name} // "") eq $ENV{NAME};
             print "$_->{vmid} $_->{node}\n"; last }'
 }
