@@ -61,12 +61,12 @@ function New-OUIfNotExists {
     $ou = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path
     
     if ($ou) {
-        Write-Host "✓ OU already exists: $Name"
+        Write-Host "OU already exists: $Name"
         return $ou.DistinguishedName
     } else {
         try {
             New-ADOrganizationalUnit -Name $Name -Path $Path -ProtectedFromAccidentalDeletion $true -ErrorAction Stop
-            Write-Host "✓ Created OU: $Name"
+            Write-Host "Created OU: $Name"
             # Query AD immediately to ensure we get the actual DistinguishedName
             $newOU = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path
             return $newOU.DistinguishedName
