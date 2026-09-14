@@ -8,15 +8,23 @@
 # member, so a clone issued here cannot land there.
 set -euo pipefail
 
+# Everything goes to the terminal and to a log file, timestamped.
+LOG="${LOG:-/var/log/pve-bootstrap.log}"
+exec > >(while IFS= read -r l; do printf '%(%F %T)T %s\n' -1 "$l"; done | tee -a "$LOG") 2>&1
+# set -e alone dies silently - say where and on what.
+trap 'echo "!! failed at line $LINENO: $BASH_COMMAND"' ERR
+
 SRC="${SRC:?set SRC to the base URL serving this directory}"
 PVE="${PVE:?set PVE to this datacenter name, matching the inventory pve column}"
 NODE="$(hostname -s)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-curl -sf "$SRC/inventory.csv"  -o "$WORK/inventory.csv"
-curl -sf "$SRC/bootstrap.ps1"  -o "$WORK/bootstrap.ps1"
-curl -sf "$SRC/config.psd1"    -o "$WORK/config.psd1"
+echo "== pve-bootstrap for $PVE on $NODE, logging to $LOG"
+for f in inventory.csv bootstrap.ps1 config.psd1; do
+    echo "-- fetching $SRC/$f"
+    curl -sSf "$SRC/$f" -o "$WORK/$f"
+done
 
 # config.psd1 is PowerShell, but the values we need are plain scalars.
 psd_value() { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" "$WORK/config.psd1"; }
@@ -29,6 +37,7 @@ if [ -z "$PUBKEY" ]; then
     PUBKEY="$(curl -sf "$SRC/id_pubkey" || true)"
 fi
 : "${PUBKEY:?set PUBKEY, or serve your public key as id_pubkey next to this script}"
+echo "-- template $TEMPLATE, dns $DNS"
 
 # The VM name is the identity - vmids are allocated, never recorded. Cluster-wide,
 # so a VM cloned to another node on a previous run is still found from here.
@@ -43,7 +52,8 @@ while IFS=, read -r name ip pve node roles vlan; do
     [ "$name" = "name" ] && continue
     [ "$pve" = "$PVE" ] || continue
 
-    read -r vmid found_node < <(find_vm "$name")
+    # read returns 1 on no output (VM absent), which set -e would treat as fatal.
+    read -r vmid found_node < <(find_vm "$name") || true
     if [ -n "$vmid" ]; then
         # Where it actually is beats where the inventory wanted it - the node
         # column is a placement preference for the first clone, nothing more.
@@ -54,11 +64,12 @@ while IFS=, read -r name ip pve node roles vlan; do
         TARGET_NODE="${node:-$NODE}"
         echo "== $name ($vmid): cloning from template $TEMPLATE"
         # --name is what makes the lookup above work on the next run.
+        # --full 0: linked clone, so the template must stay - removing it breaks every VM.
         # --target only applies in a cluster, and only when it differs from here.
         if [ "$TARGET_NODE" != "$NODE" ]; then
-            qm clone "$TEMPLATE" "$vmid" --name "$name" --full --target "$TARGET_NODE"
+            qm clone "$TEMPLATE" "$vmid" --name "$name" --full 0 --target "$TARGET_NODE"
         else
-            qm clone "$TEMPLATE" "$vmid" --name "$name" --full
+            qm clone "$TEMPLATE" "$vmid" --name "$name" --full 0
         fi
     fi
 
@@ -66,23 +77,30 @@ while IFS=, read -r name ip pve node roles vlan; do
     # rather than setting it fresh, or Proxmox hands out a new MAC.
     net0="$(pvesh get "/nodes/$TARGET_NODE/qemu/$vmid/config" --output-format json |
         perl -MJSON::PP -0777 -ne 'print decode_json($_)->{net0}')"
+    echo "-- setting vlan $vlan on net0 ($net0)"
     pvesh set "/nodes/$TARGET_NODE/qemu/$vmid/config" \
         --net0 "$(sed 's/,tag=[0-9]*//' <<< "$net0"),tag=$vlan"
 
-    pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/status/start" >/dev/null 2>&1 || true
+    echo "-- starting $name on $TARGET_NODE"
+    pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/status/start" >/dev/null 2>&1 || echo "-- (start returned non-zero, probably already running)"
 
-    echo "-- waiting for guest agent on $name"
-    for _ in $(seq 1 60); do
-        pvesh get "/nodes/$TARGET_NODE/qemu/$vmid/agent/ping" >/dev/null 2>&1 && break
+    echo "-- waiting for guest agent on $name (up to 5 min)"
+    agent=""
+    for i in $(seq 1 60); do
+        pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/agent/ping" >/dev/null 2>&1 && { agent=1; break; }
+        (( i % 6 == 0 )) && echo "-- still waiting for agent on $name ($((i * 5))s)"
         sleep 5
     done
+    [ -n "$agent" ] || { echo "!! guest agent on $name never answered"; exit 1; }
 
     # file-write goes over the virtio serial channel, so the guest needs no network yet.
+    echo "-- writing C:\\bootstrap.ps1 to $name"
     pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/agent/file-write" \
         --file 'C:\bootstrap.ps1' --content "$(cat "$WORK/bootstrap.ps1")"
 
     # The API takes argv as repeated --command values, and is async by default -
     # which is what we need: bootstrap.ps1 ends in a reboot, so it can never return.
+    echo "-- running bootstrap.ps1 on $name"
     pvesh create "/nodes/$TARGET_NODE/qemu/$vmid/agent/exec" \
         --command powershell.exe \
         --command -NoProfile \
