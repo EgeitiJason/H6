@@ -16,6 +16,13 @@ ONLY_ROLE="${2:-}"
 
 [ -f "$HERE/.env" ] && set -a && . "$HERE/.env" && set +a
 
+# Windows PowerShell 5.1 reads BOM-less UTF-8 as cp1252: a stray non-ASCII
+# character turns into a quote mark and breaks the parse on the server.
+if grep -rlP '[^\x00-\x7F]' "$HERE/roles" "$HERE/config.psd1"; then
+    echo "!! non-ASCII characters in the files above - Windows PowerShell will misparse them" >&2
+    exit 1
+fi
+
 ssh_win() { ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "$USER_NAME@$1" "${@:2}"; }
 
 wait_for_ssh() {
