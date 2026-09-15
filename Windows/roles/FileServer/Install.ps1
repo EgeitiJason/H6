@@ -12,12 +12,10 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-if (-not (Get-WindowsFeature -Name FS-FileServer).Installed) {
-    Install-WindowsFeature -Name FS-FileServer -IncludeManagementTools
-    Write-Host "File Server role installed"
-} else {
-    Write-Host "File Server role already installed"
-}
+$Feature = Install-WindowsFeature -Name FS-FileServer -IncludeManagementTools
+Write-Host "File Server role: $($Feature.ExitCode)"
+# A pending restart breaks what follows; take it, pass 2 carries on.
+if ($Feature.RestartNeeded -eq 'Yes') { Restart-Computer -Force; exit 3010 }
 
 foreach ($Share in Import-Csv "$PSScriptRoot\shares.csv") {
     if (-not (Test-Path $Share.path)) {
