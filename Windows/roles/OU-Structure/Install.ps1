@@ -4,7 +4,7 @@ param(
     [string]$FailoverSecret,
     [string]$SelfName
 )
-
+$ErrorActionPreference = 'Stop'
 $Config = Import-PowerShellDataFile "$PSScriptRoot\..\..\config.psd1"
 $OUBase = $Config.DomainDN
 
@@ -58,23 +58,16 @@ function New-OUIfNotExists {
         [string]$Path
     )
     
-    $ou = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path
+    # OneLevel: a same-named OU deeper down must not count as this one.
+    $ou = Get-ADOrganizationalUnit -Filter "Name -eq '$Name'" -SearchBase $Path -SearchScope OneLevel
     
     if ($ou) {
         Write-Host "OU already exists: $Name"
-        return $ou.DistinguishedName
     } else {
-        try {
-            New-ADOrganizationalUnit -Name $Name -Path $Path -ProtectedFromAccidentalDeletion $true -ErrorAction Stop
-            Write-Host "Created OU: $Name"
-            # Query AD immediately to ensure we get the actual DistinguishedName
-            $newOU = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path
-            return $newOU.DistinguishedName
-        } catch {
-            Write-Error "Failed to create OU '$Name' at '$Path': $_"
-            throw $_
-        }
+        $ou = New-ADOrganizationalUnit -Name $Name -Path $Path -ProtectedFromAccidentalDeletion $true -PassThru
+        Write-Host "Created OU: $Name"
     }
+    return $ou.DistinguishedName
 }
 
 
@@ -89,9 +82,6 @@ function New-OUHierarchy {
         
     # Create or get this node's OU
     $currentPath = New-OUIfNotExists -Name $Node.Name -Path $ParentPath
-    if (-not $currentPath) {
-        throw "Failed to create or retrieve OU '$($Node.Name)' under '$ParentPath'"
-    }
     
     # Recurse into children (supports unlimited depth)
     if ($Node.Children -and $Node.Children.Count -gt 0) {
@@ -105,13 +95,10 @@ function New-OUHierarchy {
 # Main execution
 Write-Host "=== Creating Active Directory OU Structure ===" -ForegroundColor Cyan
 
-# Create all OUs recursively
+# Create all OUs recursively. No try/catch: a failure must reach deploy.sh
+# as a non-zero exit, not a message it cannot see.
 foreach ($ou in $ouStructure) {
-    try {
-        New-OUHierarchy -ParentPath $OUBase -Node $ou
-    } catch {
-        Write-Error "Failed to create OU '$($ou.Name)': $_"
-    }
+    New-OUHierarchy -ParentPath $OUBase -Node $ou
 }
 
 Write-Host "=== OU Structure Creation Complete ===" -ForegroundColor Cyan
