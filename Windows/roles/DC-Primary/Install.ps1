@@ -15,17 +15,20 @@ $Subnets  = Import-Csv "$PSScriptRoot\subnets.csv"
 
 # Install ADDS and DNS. Install-ADDSForest reboots on its own when it finishes,
 # so there is deliberately no Restart-Computer here - one owner for the reboot.
-if (-not (Get-WindowsFeature -Name AD-Domain-Services).Installed) {
+# Test the promotion, not the feature: a failed promotion leaves the feature
+# installed. DomainRole 4/5 = backup/primary domain controller.
+if ((Get-CimInstance Win32_ComputerSystem).DomainRole -lt 4) {
     Write-Host "Installing AD-Domain-Services and DNS"
-    Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
-    Install-WindowsFeature -Name DNS -IncludeManagementTools
+    $Features = Install-WindowsFeature -Name AD-Domain-Services, DNS -IncludeManagementTools
+    # Promotion refuses to run with a restart pending; take it, pass 2 promotes.
+    if ($Features.RestartNeeded -eq 'Yes') { Restart-Computer -Force; exit 3010 }
     Import-Module ADDSDeployment
     Install-ADDSForest -DomainName $Config.DomainName `
         -SafeModeAdministratorPassword $Password -Force
     # It returns before the reboot starts; 3010 tells deploy.sh to wait it out.
     exit 3010
 }
-Write-Host "AD-Domain-Services already installed"
+Write-Host "Already a domain controller"
 
 if (-not (Get-DnsServerZone -Name $Config.DomainName -ErrorAction SilentlyContinue)) {
     Add-DnsServerPrimaryZone -Name $Config.DomainName -ReplicationScope 'Domain'

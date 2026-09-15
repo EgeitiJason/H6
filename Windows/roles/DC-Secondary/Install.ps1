@@ -20,8 +20,10 @@ if ($Site -notin $ValidSites) {
     throw "Site '$Site' is not one of: $($ValidSites -join ', ')"
 }
 
-if ((Get-WindowsFeature -Name AD-Domain-Services).Installed) {
-    Write-Host "AD-Domain-Services already installed"
+# Test the promotion, not the feature: a failed promotion leaves the feature
+# installed. DomainRole 4/5 = backup/primary domain controller.
+if ((Get-CimInstance Win32_ComputerSystem).DomainRole -ge 4) {
+    Write-Host "Already a domain controller"
     return
 }
 
@@ -29,7 +31,9 @@ $Password   = ConvertTo-SecureString -String $AdminPassword -AsPlainText -Force
 $Credential = [PSCredential]::new("$($Config.DomainName)\Administrator", $Password)
 
 Write-Host "Installing AD-Domain-Services and promoting into $($Config.DomainName), site $Site"
-Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+$Feature = Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+# Promotion refuses to run with a restart pending; take it, pass 2 promotes.
+if ($Feature.RestartNeeded -eq 'Yes') { Restart-Computer -Force; exit 3010 }
 Install-ADDSDomainController -InstallDns `
     -DomainName $Config.DomainName `
     -SiteName $Site `
