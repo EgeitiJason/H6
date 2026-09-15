@@ -1,2 +1,2 @@
 name,path,full_access,change_access,read_access
-server-iso,D:\server-iso,,Domain Admins,Domain Users
+shared,D:\shared,Domain Admins,Domain Users,
