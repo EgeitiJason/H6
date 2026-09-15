@@ -79,7 +79,7 @@ function New-DHCPScope {
         [Parameter(ValueFromPipelineByPropertyName)][string]$Lease = '01:00:00',
         [string]$SubnetMask = '255.255.255.0',
         [string]$DomainName,
-        [string]$DnsServer
+        [string[]]$DnsServer
     )
 
     process {
@@ -103,7 +103,7 @@ function New-DHCPScope {
 
 if ($IsPrimary) {
     Import-Csv "$PSScriptRoot\scopes.csv" |
-        New-DHCPScope -DomainName $Config.DomainName -DnsServer $Config.PrimaryDCIP
+        New-DHCPScope -DomainName $Config.DomainName -DnsServer $Config.PrimaryDCIP, $Config.SecondaryDCIP
 } else {
     Write-Host "$SelfName is not the scope owner ($Primary is); joining failover instead"
 

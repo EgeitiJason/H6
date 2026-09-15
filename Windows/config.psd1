@@ -3,6 +3,7 @@
     DomainDN     = 'DC=mfrace,DC=internal'
     OUBase       = 'OU=Middelfart Racing,DC=mfrace,DC=internal'
     PrimaryDCIP  = '10.0.10.10'
+    SecondaryDCIP = '10.0.10.11'
     DNSForwarder = '8.8.8.8'
     TimeZone     = 'Romance Standard Time'
     PrimarySite  = 'Middelfart'
