@@ -153,15 +153,16 @@ function New-DHCPScope {
 
     process {
         if (Get-DhcpServerv4Scope -ScopeId $Scope_Id -ErrorAction SilentlyContinue) {
-            Write-Host "Scope $Name ($Scope_Id) already exists"
-            return
+            Write-Host "Scope $Name ($Scope_Id) already exists, reapplying options"
+        } else {
+            # No -ScopeId here: the scope id is derived from StartRange and SubnetMask.
+            Write-Host "Creating scope $Name ($Scope_Id)"
+            Add-DhcpServerv4Scope -Name $Name `
+                -StartRange $Start -EndRange $End -SubnetMask $SubnetMask -State Active
         }
 
-        Write-Host "Creating scope $Name ($Scope_Id)"
-        Add-DhcpServerv4Scope -Name $Name -ScopeId $Scope_Id `
-            -StartRange $Start -EndRange $End -SubnetMask $SubnetMask -State Active
-
-        Set-DhcpServerv4OptionValue -ScopeId $Scope_Id -OptionId 1  -Value $SubnetMask
+        # Always (re)set, so a run that died after creating the scope still
+        # ends up with options. The mask is the scope's own, not option 1.
         Set-DhcpServerv4OptionValue -ScopeId $Scope_Id -OptionId 15 -Value $DomainName
         Set-DhcpServerv4OptionValue -ScopeId $Scope_Id -OptionId 6  -Value $DnsServer
         Set-DhcpServerv4OptionValue -ScopeId $Scope_Id -OptionId 3  -Value $Gateway
