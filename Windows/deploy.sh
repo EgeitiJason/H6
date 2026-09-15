@@ -10,7 +10,9 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INVENTORY="$HERE/inventory.csv"
-USER_NAME="${WIN_USER:-Administrator}"
+LOCAL_USER="${WIN_USER:-Administrator}"
+USER_NAME="$LOCAL_USER"
+DOMAIN="$(sed -n "s/^[[:space:]]*DomainName[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" "$HERE/config.psd1")"
 ONLY_HOST="${1:-}"
 ONLY_ROLE="${2:-}"
 
@@ -25,10 +27,19 @@ fi
 
 ssh_win() { ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "$USER_NAME@$1" "${@:2}"; }
 
+# Log in with the local account, then switch to the same-named domain account
+# once the box is joined (or promoted). Re-checked after every reconnect, so
+# the switch happens right after DomainJoin's reboot.
 wait_for_ssh() {
     local ip="$1"
+    USER_NAME="$LOCAL_USER"
     for _ in $(seq 1 60); do
-        ssh_win "$ip" exit >/dev/null 2>&1 && return 0
+        if ssh_win "$ip" exit >/dev/null 2>&1; then
+            if ssh_win "$ip" powershell -NoProfile -Command '(Get-CimInstance Win32_ComputerSystem).PartOfDomain' 2>/dev/null | grep -q True; then
+                USER_NAME="$LOCAL_USER@$DOMAIN"
+            fi
+            return 0
+        fi
         sleep 5
     done
     echo "!! $ip never came back on ssh" >&2
