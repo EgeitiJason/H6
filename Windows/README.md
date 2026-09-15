@@ -66,6 +66,17 @@ Then, from this machine:
 ./test.sh                       # inventory/config sanity + PowerShell parse check
 ```
 
+### Users and file shares
+
+`roles/Users/users.csv` is fake staff from `./generate-users.py [per-department]`
+(default 25). Raising the count only appends, so existing accounts are never
+renamed. The `Users` role (on `SRV-ADDS-01`) creates `SG-<department>` groups,
+the users with `USER_INITIAL_PASSWORD` (changed at first logon), `H:` home
+folders, and a GPO mapping `F:` Faelles and `G:` Afdelinger. `FileServer`
+creates one `D:\Shares\Afdelinger\<department>` per leaf OU under Users
+(`OU-Structure/ous.psd1`, the same list the `SG-` groups come from) and reads the same CSV for
+`D:\Shares\Privat\<sam>`. Removing a row deletes nothing.
+
 ## How it fits together
 
 `config.psd1` is the single source of truth — domain, IPs, sites, time zone.
@@ -90,8 +101,10 @@ Three rules, and that's the whole framework:
    a CSV.
 2. Start with the standard param block and
    `$Config = Import-PowerShellDataFile "$PSScriptRoot\..\..\config.psd1"`.
-   `deploy.sh` passes `-AdminPassword`, `-FailoverSecret` and `-SelfName` to
-   every role, so declare all three even if unused.
+   `deploy.sh` passes `-AdminPassword`, `-FailoverSecret`, `-SelfName` and
+   `-UserPassword` to every role, so declare all four even if unused.
+   Anything that needs AD or SYSVOL from a key-based SSH logon goes through
+   `roles/Invoke-AsDomainAdmin.ps1`.
 3. Make it **idempotent**. `deploy.sh` runs each role twice with a reconnect in
    between: pass two finishes anything a reboot interrupted, and for roles that
    never reboot it is a free idempotency check.
@@ -100,8 +113,6 @@ Then add the role name to a host's `roles` cell.
 
 ## Known gaps
 
-- `FileServer/shares.csv` is a placeholder. Real share layout and NTFS ACLs
-  against the OU-tree groups (IT, HR, Finans, Lager) are still to be decided.
 - Veeam B&R itself is an ISO install; `SRV-VEEAM-01` only gets `BaseServer` and
   `DomainJoin` from here.
 - NAC/RADIUS is out of scope — likely PacketFence, which would be its own Linux

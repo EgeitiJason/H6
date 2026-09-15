@@ -75,7 +75,8 @@ run_role() {
             -File "C:\\deploy\\roles\\$role\\Install.ps1" \
             -AdminPassword "\"${AD_PASSWORD:-}\"" \
             -FailoverSecret "\"${DHCP_FAILOVER_SECRET:-}\"" \
-            -SelfName "\"$3\""
+            -SelfName "\"$3\"" \
+            -UserPassword "\"${USER_INITIAL_PASSWORD:-}\""
         rc=$?
         if [ "$rc" = 194 ] || [ "$rc" = 255 ]; then
             echo "-- $role on $ip: waiting for reboot"

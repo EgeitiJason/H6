@@ -10,6 +10,7 @@
     Sites        = @('Odense')
     SiteLinkName = 'MiddelfartRace-Site-Link'
     DhcpServers  = @('SRV-DHCP-01', 'SRV-DHCP-02')
+    FileServer   = 'SRV-FILE-01'
 
     # Template each PVE datacenter clones from. Must exist on shared storage
     # for a cluster, local storage for a standalone host.

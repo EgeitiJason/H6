@@ -9,6 +9,7 @@ param(
     [string]$AdminPassword,
     [string]$FailoverSecret,
     [string]$SelfName,
+    [string]$UserPassword,
     [string]$Site
 )
 $ErrorActionPreference = 'Stop'

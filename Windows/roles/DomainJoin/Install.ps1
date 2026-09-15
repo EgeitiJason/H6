@@ -6,7 +6,8 @@
 param(
     [string]$AdminPassword,
     [string]$FailoverSecret,
-    [string]$SelfName
+    [string]$SelfName,
+    [string]$UserPassword
 )
 $ErrorActionPreference = 'Stop'
 $Config = Import-PowerShellDataFile "$PSScriptRoot\..\..\config.psd1"
