@@ -7,46 +7,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $Config = Import-PowerShellDataFile "$PSScriptRoot\..\..\config.psd1"
 $OUBase = $Config.DomainDN
-
-# Define OU hierarchy - modify this structure to change OUs
-$ouStructure = @(
-    @{
-        Name = "Middelfart Racing"
-        Children = @(
-            @{
-                Name = "Computers"
-                Children = @()
-            },
-            @{
-                Name = "Groups"
-                Children = @(
-                    @{ Name = "Apps" },
-                    @{ Name = "Fileshares" }
-                )
-            },
-            @{
-                Name = "Servers"
-                Children = @()
-            },
-            @{
-                Name = "Users"
-                Children = @(
-                    @{ Name = "Admin" },
-                    @{ 
-                        Name = "Administration" 
-                        Children = @(
-                            @{ Name = "IT" },
-                            @{ Name = "HR" },
-                            @{ Name = "Finans" }
-                        )
-                    },
-                    @{ Name = "Lager" },
-                    @{ Name = "Service Accounts" }
-                )
-            }
-        )
-    }
-)
+# The hierarchy lives in ous.psd1, shared with the Users and FileServer roles.
+$ouStructure = (Import-PowerShellDataFile "$PSScriptRoot\ous.psd1").OUs
 
 
 function New-OUIfNotExists {
