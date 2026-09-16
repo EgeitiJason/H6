@@ -73,7 +73,8 @@ Then, from this machine:
 renamed. The `Users` role (on `SRV-ADDS-01`) creates `SG-<department>` groups,
 the users with `USER_INITIAL_PASSWORD` (changed at first logon), and a GPO
 whose preferences map `F:` Faelles, `G:` Afdelinger and `H:` `Privat\%LogonUser%`,
-with a logon script creating that private folder. `FileServer` creates one
+with a logon script creating that private folder. The GPO is also linked to
+`Computers` for `EnableLinkedConnections`, so admins see that `H:` too. `FileServer` creates one
 `D:\Shares\Afdelinger\<department>` per leaf OU under Users
 (`OU-Structure/ous.psd1`, the same list the `SG-` groups come from); on
 `Privat` users may only create a folder, which then only its creator can open.

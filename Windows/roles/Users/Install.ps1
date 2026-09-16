@@ -79,10 +79,11 @@ foreach ($Dept in $Users | Group-Object department) {
 Remove-Item "$((Get-SmbShare -Name NETLOGON).Path)\map-drives.cmd" -ErrorAction SilentlyContinue
 
 $Vars = @{
-    GpoName    = 'GPO_MFRACE_Drev_Mapping'
-    Target     = $UsersOU
-    DomainName = $Config.DomainName
-    FileServer = $Config.FileServer
+    GpoName     = 'GPO_MFRACE_Drev_Mapping'
+    UsersOU     = $UsersOU
+    ComputersOU = "OU=Computers,$($Config.OUBase)"
+    DomainName  = $Config.DomainName
+    FileServer  = $Config.FileServer
 }
 Invoke-AsDomainAdmin -Label 'drive-gpo' -Variables $Vars -Script {
     if (Get-GPO -Name $GpoName -ErrorAction SilentlyContinue) {
@@ -99,6 +100,11 @@ Invoke-AsDomainAdmin -Label 'drive-gpo' -Variables $Vars -Script {
     # turn up late; synchronous ones finish before the desktop appears.
     Set-GPRegistryValue -Name $GpoName -Key 'HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System' `
         -ValueName 'RunLogonScriptSync' -Type DWord -Value 1 | Out-Null
+    # Computer side, hence the second link: the logon script runs on an admin's
+    # elevated token, and without this Explorer on the filtered token never
+    # sees the H: it mapped. Takes a client reboot.
+    Set-GPRegistryValue -Name $GpoName -Key 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' `
+        -ValueName 'EnableLinkedConnections' -Type DWord -Value 1 | Out-Null
 
     # Fixed uids and timestamp, so a rerun writes identical files and the
     # version only moves when something really changed.
@@ -114,9 +120,9 @@ Invoke-AsDomainAdmin -Label 'drive-gpo' -Variables $Vars -Script {
     }
     # The logon script is a bare cmd.exe line rather than a .cmd file: a script
     # run from \\<domain> is Internet zone and prompts before it starts.
-    # It also maps H: when the drive map ran before the folder existed - the
-    # Drive Maps extension always runs before logon scripts, so a user's
-    # first logon. scripts.ini must be UTF-16.
+    # It also maps H: if the drive map failed: Drive Maps always runs before
+    # logon scripts, so on a user's first logon the folder did not exist yet.
+    # scripts.ini must be UTF-16.
     $Files = @{
         'Scripts\scripts.ini' = @{ Encoding = 'unicode'; Value = @(
             '[Logon]'
@@ -165,10 +171,12 @@ Invoke-AsDomainAdmin -Label 'drive-gpo' -Variables $Vars -Script {
         Write-Host "Drive maps already in $GpoName"
     }
 
-    if ((Get-GPInheritance -Target $Target).GpoLinks.DisplayName -contains $GpoName) {
-        Write-Host "GPO already linked to $Target"
-    } else {
-        New-GPLink -Name $GpoName -Target $Target | Out-Null
-        Write-Host "Linked GPO to $Target"
+    foreach ($Target in $UsersOU, $ComputersOU) {
+        if ((Get-GPInheritance -Target $Target).GpoLinks.DisplayName -contains $GpoName) {
+            Write-Host "GPO already linked to $Target"
+        } else {
+            New-GPLink -Name $GpoName -Target $Target | Out-Null
+            Write-Host "Linked GPO to $Target"
+        }
     }
 }
