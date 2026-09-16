@@ -1,13 +1,14 @@
 <#
     File server: Faelles, Afdelinger and Privat on the data disk (D:), with a
     folder per department (leaf OU under Users, see ../Get-Departments.ps1)
-    for its SG- group and a private folder per user.
+    for its SG- group. Private folders are created by the users themselves at
+    logon (drive-mapping GPO in ../Users).
     Rewrite of h5's Create-FileSrv, whose ACL helper also stripped SYSTEM and
     which left the Afdelinger and Privat roots inheriting the drive's default
     "Users may create folders".
 
-    Private folders come from ../Users/users.csv; the groups and users must already
-    exist in AD - SRV-ADDS-01 runs the Users role earlier in inventory.csv.
+    The groups must already exist in AD - SRV-ADDS-01 runs the Users role
+    earlier in inventory.csv.
 #>
 param(
     [string]$AdminPassword,
@@ -17,7 +18,6 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $Config = Import-PowerShellDataFile "$PSScriptRoot\..\..\config.psd1"
-$Users  = Import-Csv "$PSScriptRoot\..\Users\users.csv"
 $Domain = $Config.DomainName.Split('.')[0].ToUpper()   # NetBIOS name
 $Base   = 'D:\Shares'
 
@@ -44,10 +44,13 @@ function Set-FolderAcl {
 # Roots of Afdelinger and Privat: Domain Users may list, not write - no
 # (OI)(CI), so it stops at the root. Access-based enumeration then hides the
 # subfolders a user cannot open.
+# Privat additionally lets them create a folder (AD) but no files. CREATOR
+# OWNER passes Modify to whoever created a folder and nobody else, so each user
+# only reaches their own; SYSTEM and Administrators inherit as everywhere.
 $Shares = @(
     @{ Name = 'Faelles';    Grant = "$Domain\Domain Users:(OI)(CI)M"; AccessBased = $false }
     @{ Name = 'Afdelinger'; Grant = "$Domain\Domain Users:RX";        AccessBased = $true }
-    @{ Name = 'Privat';     Grant = "$Domain\Domain Users:RX";        AccessBased = $true }
+    @{ Name = 'Privat';     Grant = @("$Domain\Domain Users:(RD,X,RA,REA,RC,S,AD)", '*S-1-3-0:(OI)(CI)(IO)M'); AccessBased = $true }
 )
 foreach ($Share in $Shares) {
     $Path = "$Base\$($Share.Name)"
@@ -71,8 +74,3 @@ foreach ($Dept in Get-Departments) {
     Set-FolderAcl -Path "$Base\Afdelinger\$Dept" -Grant "$Domain\SG-${Dept}:(OI)(CI)M"
     Write-Host "Afdelinger\$Dept -> SG-$Dept"
 }
-
-foreach ($User in $Users) {
-    Set-FolderAcl -Path "$Base\Privat\$($User.sam)" -Grant "$Domain\$($User.sam):(OI)(CI)M"
-}
-Write-Host "$($Users.Count) private folders in place"
