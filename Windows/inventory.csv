@@ -1,5 +1,5 @@
 name,ip,pve,node,roles,vlan
-SRV-ADDS-01,10.0.10.10,PROD-1,HYP-PVE-DC1-01-1,BaseServer;DC-Primary;OU-Structure;Users,10
+SRV-ADDS-01,10.0.10.10,PROD-1,HYP-PVE-DC1-01-1,BaseServer;DC-Primary;OU-Structure;Users;Wallpaper,10
 SRV-ADDS-02,10.0.10.11,PROD-1,HYP-PVE-DC1-01-2,BaseServer;DC-Secondary,10
 SRV-DHCP-01,10.0.10.12,PROD-1,HYP-PVE-DC1-01-2,BaseServer;DomainJoin;DHCP,10
 SRV-DHCP-02,10.0.10.13,PROD-1,HYP-PVE-DC1-01-3,BaseServer;DomainJoin;DHCP,10

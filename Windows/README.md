@@ -80,6 +80,13 @@ with a logon script creating that private folder. The GPO is also linked to
 `Privat` users may only create a folder, which then only its creator can open.
 Removing a row deletes nothing.
 
+### Wallpaper
+
+The `Wallpaper` role (on `SRV-ADDS-01`, after `Users`) copies the badge image from
+`wallpapers/` into NETLOGON and links `GPO_MFRACE_Wallpaper` to `Users` and
+`Computers`, which sets it as both desktop (Fill) and lock screen. The lock screen policy is only honoured by Enterprise, Education and
+Server editions.
+
 ## How it fits together
 
 `config.psd1` is the single source of truth — domain, IPs, sites, time zone.

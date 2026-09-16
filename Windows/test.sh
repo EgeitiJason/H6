@@ -36,9 +36,9 @@ check "VEEAM on vlan 30" "30" "$(rows | awk -F, '$1=="SRV-VEEAM-01" {print $6}')
 # Role order within a cell is execution order - it must survive parsing intact.
 roles_of() { rows | awk -F, -v n="$1" '$1==n {print $5}'; }
 IFS=';' read -ra r <<< "$(roles_of SRV-ADDS-01)"
-check "ADDS-01 role count" "4" "${#r[@]}"
+check "ADDS-01 role count" "5" "${#r[@]}"
 check "ADDS-01 first role" "BaseServer" "${r[0]}"
-check "ADDS-01 last role"  "Users" "${r[3]}"
+check "ADDS-01 last role"  "Wallpaper" "${r[4]}"
 
 # DC-Primary must precede DC-Secondary, and DHCP-01 precede DHCP-02, or
 # promotion and failover both fail. Row order is the only thing enforcing it.

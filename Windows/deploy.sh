@@ -50,7 +50,7 @@ push() {
     local ip="$1"
     ssh_win "$ip" 'if not exist C:\deploy mkdir C:\deploy' >/dev/null
     scp -q -o StrictHostKeyChecking=accept-new -r \
-        "$HERE/config.psd1" "$HERE/roles" "$USER_NAME@$ip:C:/deploy/"
+        "$HERE/config.psd1" "$HERE/roles" "$HERE/wallpapers" "$USER_NAME@$ip:C:/deploy/"
 }
 
 wait_for_ssh_down() {
