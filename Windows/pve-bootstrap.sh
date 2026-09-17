@@ -6,6 +6,10 @@
 #
 # Paste it once per Proxmox datacenter - a standalone host is not a cluster
 # member, so a clone issued here cannot land there.
+#
+# ONLY limits it to named hosts, since every row it touches is rebooted:
+#
+#   ... | PVE=PROD-1 SRC=... ONLY="SRV-PKI-01 SRV-PKI-02" bash
 set -euo pipefail
 
 # Everything goes to the terminal and to a log file, timestamped.
@@ -17,6 +21,7 @@ trap 'echo "!! failed at line $LINENO: $BASH_COMMAND"' ERR
 SRC="${SRC:?set SRC to the base URL serving this directory}"
 PVE="${PVE:?set PVE to this datacenter name, matching the inventory pve column}"
 NODE="$(hostname -s)"
+ONLY="${ONLY:-}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
@@ -51,6 +56,11 @@ find_vm() { # name -> "vmid node", empty when absent
 while IFS=, read -r name ip pve node roles vlan; do
     [ "$name" = "name" ] && continue
     [ "$pve" = "$PVE" ] || continue
+    # Every row reached below is started, rewritten and rebooted, so a partial
+    # run has to be opt-in by name rather than by datacenter.
+    if [ -n "$ONLY" ]; then
+        case " ${ONLY//,/ } " in *" $name "*) ;; *) continue ;; esac
+    fi
 
     # read returns 1 on no output (VM absent), which set -e would treat as fatal.
     read -r vmid found_node < <(find_vm "$name") || true
