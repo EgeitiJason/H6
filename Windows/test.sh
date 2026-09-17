@@ -21,12 +21,12 @@ check "BACKUP-1 template" "9000" "$(tmpl BACKUP-1)"
 
 # --- inventory rows
 rows() { tail -n +2 inventory.csv; }
-check "host count" "6" "$(rows | wc -l)"
-check "PROD-1 rows"   "5" "$(rows | awk -F, '$3=="PROD-1"'   | wc -l)"
+check "host count" "9" "$(rows | wc -l)"
+check "PROD-1 rows"   "7" "$(rows | awk -F, '$3=="PROD-1"'   | wc -l)"
 check "BACKUP-1 rows" "1" "$(rows | awk -F, '$3=="BACKUP-1"' | wc -l)"
 # Name is the key pve-bootstrap.sh clones against - a duplicate collapses two
 # hosts onto one VM.
-check "unique names" "6" "$(rows | cut -d, -f1 | sort -u | wc -l)"
+check "unique names" "9" "$(rows | cut -d, -f1 | sort -u | wc -l)"
 
 # vlan tags net0 on the bridge; the gateway is derived as <ip>.1, so the IP
 # must sit in the matching 10.0.<vlan>.0/24 or the host comes up unrouted.
@@ -47,13 +47,21 @@ line_of() { rows | grep -n "^$1," | cut -d: -f1; }
     && echo "ok   ADDS-01 before ADDS-02" || { echo "FAIL ADDS ordering"; fail=1; }
 [ "$(line_of SRV-DHCP-01)" -lt "$(line_of SRV-DHCP-02)" ] \
     && echo "ok   DHCP-01 before DHCP-02" || { echo "FAIL DHCP ordering"; fail=1; }
+# The issuing CA needs the root installed and running to get signed.
+[ "$(line_of SRV-PKI-01)" -lt "$(line_of SRV-PKI-02)" ] \
+    && echo "ok   PKI-01 before PKI-02" || { echo "FAIL PKI ordering"; fail=1; }
+
+# Dot1x reads the root CA certificate PKI-Issuing leaves in CertEnroll.
+case "$(roles_of SRV-PKI-02)" in *PKI-Issuing\;Dot1x*) echo "ok   Dot1x after PKI-Issuing";;
+    *) echo "FAIL Dot1x must follow PKI-Issuing on SRV-PKI-02"; fail=1;; esac
 
 # A DC must never carry DomainJoin, and a member server must always carry it.
-for h in SRV-ADDS-01 SRV-ADDS-02; do
+# The offline root CA stays out of the domain.
+for h in SRV-ADDS-01 SRV-ADDS-02 SRV-PKI-01; do
     case "$(roles_of $h)" in *DomainJoin*) echo "FAIL $h joins the domain"; fail=1;;
         *) echo "ok   $h does not join";; esac
 done
-for h in SRV-DHCP-01 SRV-DHCP-02 SRV-FILE-01 SRV-VEEAM-01; do
+for h in SRV-DHCP-01 SRV-DHCP-02 SRV-FILE-01 SRV-PKI-02 SRV-VEEAM-01; do
     case "$(roles_of $h)" in *DomainJoin*) echo "ok   $h joins";;
         *) echo "FAIL $h missing DomainJoin"; fail=1;; esac
 done

@@ -14,7 +14,8 @@
                     Name = "Groups"
                     Children = @(
                         @{ Name = "Apps" },
-                        @{ Name = "Fileshares" }
+                        @{ Name = "Fileshares" },
+                        @{ Name = "Wifi" }
                     )
                 },
                 @{
