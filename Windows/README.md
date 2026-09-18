@@ -95,6 +95,13 @@ The `Wallpaper` role (on `SRV-ADDS-01`, after `Users`) copies the badge image fr
 `Computers`, which sets it as both desktop (Fill) and lock screen. The lock screen policy is only honoured by Enterprise, Education and
 Server editions.
 
+### DMZ web servers
+
+`SRV-DMZ-IIS-01` and `-02` sit on VLAN 40 and run `BaseServer` plus `IIS`,
+which installs the Web-Server feature and nothing else - no sites, bindings or
+certificates. They are not domain-joined, so they get neither a GPO nor an
+autoenrolled certificate.
+
 ### PKI
 
 Two tiers. `SRV-PKI-01` is a standalone root CA, never domain-joined;

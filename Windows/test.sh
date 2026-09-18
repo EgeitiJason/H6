@@ -21,12 +21,12 @@ check "BACKUP-1 template" "9000" "$(tmpl BACKUP-1)"
 
 # --- inventory rows
 rows() { tail -n +2 inventory.csv; }
-check "host count" "9" "$(rows | wc -l)"
-check "PROD-1 rows"   "7" "$(rows | awk -F, '$3=="PROD-1"'   | wc -l)"
+check "host count" "11" "$(rows | wc -l)"
+check "PROD-1 rows"   "9" "$(rows | awk -F, '$3=="PROD-1"'   | wc -l)"
 check "BACKUP-1 rows" "1" "$(rows | awk -F, '$3=="BACKUP-1"' | wc -l)"
 # Name is the key pve-bootstrap.sh clones against - a duplicate collapses two
 # hosts onto one VM.
-check "unique names" "9" "$(rows | cut -d, -f1 | sort -u | wc -l)"
+check "unique names" "11" "$(rows | cut -d, -f1 | sort -u | wc -l)"
 
 # vlan tags net0 on the bridge; the gateway is derived as <ip>.1, so the IP
 # must sit in the matching 10.0.<vlan>.0/24 or the host comes up unrouted.
