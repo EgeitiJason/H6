@@ -1,9 +1,40 @@
 hostname NW-OOB-DC1-01
 
 no ip domain lookup
-banner motd "Unauthorized access is prohibited"
+banner motd "
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+                  M I D D E L F A R T   R A C I N G
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+        Authorized use only. Activity is logged and monitored.
+        Unauthorized access may result in disciplinary action
+                         and/or prosecution.
+
+                  Contact: noc@middelfartracing.dk
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+
+"
 service password-encryption
 username cisco secret cisco
+
+ip default-gateway 10.10.99.1
+
+aaa new-model
+
+radius-server host 10.0.10.16 auth-port 1812 acct-port 1813 key Password1!
+
+aaa group server radius SRV-RADIUS
+ server 10.0.10.16 auth-port 1812 acct-port 1813
+
+
+
+radius-server vsa send accounting
+
+aaa authorization exec VTY_AUTHOR group SRV-RADIUS local
+aaa authentication login VTY_AUTHEN group SRV-RADIUS local
+
+line vty 0 15
+ authorization exec VTY_AUTHOR
+ login authentication VTY_AUTHEN
 
 int vlan 99
 ip address 10.0.99.7 255.255.255.0
@@ -13,15 +44,15 @@ ip domain-name mfrace.internal
 crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
 
-line vty 0 4
+line vty 0 15
 password cisco
 transport input ssh
-exec-timeout 0
+exec-timeout 15 0
 login local
 
 line console 0
 password cisco
-exec-timeout 0
+exec-timeout 15 0
 login local
 end
 
