@@ -56,15 +56,6 @@ name Jail
 Vlan 999
 name Blackhole
 
-Vlan 1000
-name CEPH
-
-Vlan 1010
-name Corosync0
-
-Vlan 1011
-name Corosync1
-
 int vlan 99
 ip address 10.10.99.4 255.255.255.0
 exit
