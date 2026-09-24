@@ -234,7 +234,8 @@ Then add the role name to a host's `roles` cell.
 ## Known gaps
 
 - Veeam B&R itself is an ISO install; `SRV-VEEAM-01` only gets `BaseServer` and
-  `DomainJoin` from here.
+  `DomainJoin` from here. The jobs, repositories and firewall rules it needs are
+  documented in [Veeam.md](Veeam.md).
 - PacketFence (`srv-radius-01`, 10.0.10.16) is configured in its own GUI, not
   from here. What has to line up on this side: Windows DHCP must have **no**
   scope on the registration and isolation VLANs (PacketFence serves DHCP and
