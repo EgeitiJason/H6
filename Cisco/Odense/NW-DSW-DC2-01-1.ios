@@ -1,7 +1,18 @@
 hostname NW-DSW-DC2-01-1
 
 no ip domain lookup
-banner motd "Unauthorized access is prohibited"
+banner motd "
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+                  M I D D E L F A R T   R A C I N G
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+        Authorized use only. Activity is logged and monitored.
+        Unauthorized access may result in disciplinary action
+                         and/or prosecution.
+
+                  Contact: noc@middelfartracing.dk
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+
+"
 service password-encryption
 username cisco secret cisco
 
@@ -13,15 +24,15 @@ ip domain-name mfrace.internal
 crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
 
-line vty 0 4
+line vty 0 15
 password cisco
 transport input ssh
-exec-timeout 0
+exec-timeout 15 0
 login local
 
 line console 0
 password cisco
-exec-timeout 0
+exec-timeout 15 0
 login local
 
 switch 1 priority 15
