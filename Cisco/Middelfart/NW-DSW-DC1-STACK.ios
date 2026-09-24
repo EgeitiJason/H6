@@ -5,6 +5,25 @@ username cisco privilege 15 secret cisco
 
 spanning-tree portfast default
 VTP mode transparent
+ip default-gateway 10.10.99.1
+
+aaa new-model
+
+radius server SRV-RADIUS-01
+ address ipv4 10.0.10.16 auth-port 1812 acct-port 1813
+ key Password1!
+
+aaa group server radius SRV-RADIUS
+ server name SRV-RADIUS-01
+radius-server vsa send accounting
+
+aaa authorization exec VTY_AUTHOR group SRV-RADIUS local
+aaa authentication login VTY_AUTHEN group SRV-RADIUS local
+
+line vty 0 15
+ exec-timeout 15 0
+ authorization exec VTY_AUTHOR
+ login authentication VTY_AUTHEN
 
 Vlan 10
 name Servere
@@ -20,6 +39,9 @@ name DMZ
 
 Vlan 99
 name Management
+
+Vlan 100
+name Guest
 
 Vlan 555
 name Registraion
@@ -48,7 +70,7 @@ description "HYP-PVE-DC-01-1 | Bond0"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,555,666
 
 interface port-channel 2
 description "HYP-PVE-DC1-01 | Bond1 CEPH"
@@ -61,7 +83,7 @@ description "HYP-PVE-DC1-01-2 | Bond0"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,555,666
 
 interface port-channel 5
 description "HYP-PVE-DC1-01-2 | Bond1 CEPH"
@@ -74,26 +96,27 @@ description "HYP-PVE-DC1-01-3 | Bond0"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,555,666
 
 interface port-channel 8
-description "HYP-PVE-DC1-01-2 | Bond1 CEPH"
+description "HYP-PVE-DC1-01-3 | Bond1 CEPH"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk allowed vlan 1000
+
+interface port-channel 44
+description "HYP-PVE-BKP-DC1-01 | eth 4 & eth 0"
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 30,99
 
 interface port-channel 45
 description "NW-ASW-DC1-01 | Port g1/0/47-48"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
-
-interface port-channel 44
-description "HYP-PVE-BKP-DC1-01 | Bond0"
-switchport mode trunk
-switchport trunk encapsulation dot1q
-switchport trunk allowed vlan 20,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
 
 interface port-channel 46
 description "NW-OOB-DC1-01 | Port g1/0/23-24"
@@ -107,14 +130,14 @@ description "NW-FW-EDGE-DC1-02 | Port eth1-2"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
 
 interface port-channel 48
 description "NW-FW-EDGE-DC1-01 | Port eth1-2"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
 
 Interface range g1/0/48, g2/0/48
 channel-protocol lacp
@@ -122,7 +145,7 @@ channel-group 48 mode active
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
 
 Interface range g1/0/47, g2/0/47
 channel-protocol lacp
@@ -130,7 +153,7 @@ channel-group 47 mode active
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
 
 Interface range g1/0/46, g2/0/46
 channel-protocol lacp
@@ -146,4 +169,13 @@ channel-group 45 mode active
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
+
+Interface range g1/0/44, g2/0/44
+channel-protocol lacp
+channel-group 44 mode active
+switchport mode trunk
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 999
+switchport trunk allowed vlan 30,99
+
