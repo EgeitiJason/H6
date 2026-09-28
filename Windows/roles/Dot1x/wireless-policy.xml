@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!-- Wireless Network (IEEE 802.11) Policies, as GPMC stores them in the GPO's
+     ms-net-ieee-80211-GP-PolicyData attribute. One SSID per policy, because a
+     GPO holds only one wireless policy; the GPO is filtered to its group.
+     SEEDED-FROM-CONSOLE: no - written from the documented schema. If clients
+     ignore the policy, re-export a hand-made one (see Windows/README.md). -->
+<WLANPolicy xmlns="http://www.microsoft.com/networking/WLAN/policy/v1">
+  <name>{{POLICYNAME}}</name>
+  <description>EAP-TLS on {{SSID}}</description>
+  <policyGUID>{{POLICYGUID}}</policyGUID>
+  <globalFlags>
+    <enableAutoConfig>true</enableAutoConfig>
+    <showDeniedNetworks>false</showDeniedNetworks>
+    <allowEveryoneToCreateAllUserProfiles>false</allowEveryoneToCreateAllUserProfiles>
+    <onlyUseGPProfilesForAllowedNetworks>false</onlyUseGPProfilesForAllowedNetworks>
+  </globalFlags>
+  <profileList>
+    <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+      <name>{{SSID}}</name>
+      <SSIDConfig>
+        <SSID><name>{{SSID}}</name></SSID>
+        <nonBroadcast>false</nonBroadcast>
+      </SSIDConfig>
+      <connectionType>ESS</connectionType>
+      <connectionMode>auto</connectionMode>
+      <MSM>
+        <security>
+          <authEncryption>
+            <authentication>WPA2</authentication>
+            <encryption>AES</encryption>
+            <useOneX>true</useOneX>
+          </authEncryption>
+          <OneX xmlns="http://www.microsoft.com/networking/OneX/v1">
+            <cacheUserData>true</cacheUserData>
+            <authMode>machineOrUser</authMode>
+            {{EAPCONFIG}}
+          </OneX>
+        </security>
+      </MSM>
+    </WLANProfile>
+  </profileList>
+</WLANPolicy>

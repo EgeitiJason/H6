@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!-- Wired Network (IEEE 802.3) Policies, as GPMC stores them in the GPO's
+     ms-net-ieee-8023-GP-PolicyData attribute.
+     OneXEnforced=false is "fall back to unauthorized network access": a laptop
+     on a home or hotel port still gets a link, it just never authenticates.
+     SEEDED-FROM-CONSOLE: no - written from the documented schema. If clients
+     ignore the policy, re-export a hand-made one (see Windows/README.md). -->
+<msLANPolicy xmlns="http://www.microsoft.com/networking/LAN/policy/v1">
+  <name>{{POLICYNAME}}</name>
+  <description>EAP-TLS on wired, preferred but not enforced</description>
+  <policyGUID>{{POLICYGUID}}</policyGUID>
+  <globalFlags>
+    <enableLANAutoConfig>true</enableLANAutoConfig>
+  </globalFlags>
+  <profileList>
+    <LANProfile xmlns="http://www.microsoft.com/networking/LAN/profile/v1">
+      <MSM>
+        <security>
+          <OneXEnforced>false</OneXEnforced>
+          <OneXEnabled>true</OneXEnabled>
+          <OneX xmlns="http://www.microsoft.com/networking/OneX/v1">
+            <cacheUserData>true</cacheUserData>
+            <authMode>machineOrUser</authMode>
+            {{EAPCONFIG}}
+          </OneX>
+        </security>
+      </MSM>
+    </LANProfile>
+  </profileList>
+</msLANPolicy>

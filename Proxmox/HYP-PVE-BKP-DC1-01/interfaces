@@ -1,0 +1,33 @@
+auto lo
+iface lo inet loopback
+
+# Physical interfaces
+iface nic0 inet manual
+iface nic4 inet manual
+
+# ============================================
+# bond0: VMs + Management + Migration (LACP)
+# ============================================
+auto bond0
+iface bond0 inet manual
+    bond-slaves nic0 nic4
+    bond-miimon 100
+    bond-mode 802.3ad
+    bond-xmit-hash-policy layer2+3
+    bond-lacp-rate slow
+
+# vmbr0: VLAN-aware bridge, no IP of its own.
+# VMs get assigned to VLAN 10 or 20 via their NIC config.
+auto vmbr0
+iface vmbr0 inet manual
+    bridge-ports bond0
+    bridge-stp off
+    bridge-fd 0
+    bridge-vlan-aware yes
+    bridge-vids 2-4094
+
+# Management (VLAN 99) — holds the default gateway
+auto vmbr0.99
+iface vmbr0.99 inet static
+    address 10.0.99.16/24
+    gateway 10.0.99.1

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Answers OOBE on first boot of a clone. Used once, when sealing the template:
+     sysprep /generalize /oobe /shutdown /unattend:C:\unattend.xml -->
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+  <settings pass="oobeSystem">
+    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <!-- English UI, Danish everything else. en-DK has no LCID, so the two
+           settings that need one use Danish keyboard / da-DK instead. -->
+      <InputLocale>0409:00000406</InputLocale>
+      <SystemLocale>da-DK</SystemLocale>
+      <UILanguage>en-US</UILanguage>
+      <UserLocale>en-DK</UserLocale>
+    </component>
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <HideLocalAccountScreen>true</HideLocalAccountScreen>
+        <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+        <ProtectYourPC>3</ProtectYourPC>
+      </OOBE>
+      <TimeZone>Romance Standard Time</TimeZone>
+      <UserAccounts>
+        <AdministratorPassword>
+          <!-- Replace before sealing. Not committed with a real value. -->
+          <Value>CHANGE-ME</Value>
+          <PlainText>true</PlainText>
+        </AdministratorPassword>
+      </UserAccounts>
+    </component>
+  </settings>
+</unattend>

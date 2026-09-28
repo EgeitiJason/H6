@@ -1,0 +1,4 @@
+127.0.0.1 localhost.localdomain localhost
+10.0.99.10 HYP-PVE-DC1-01-1.mfrace.internal HYP-PVE-DC1-01-1
+10.0.99.12 HYP-PVE-DC1-01-2.mfrace.internal HYP-PVE-DC1-01-2
+10.0.99.14 HYP-PVE-DC1-01-3.mfrace.internal HYP-PVE-DC1-01-3
