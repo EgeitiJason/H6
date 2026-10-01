@@ -34,6 +34,15 @@ foreach ($Dept in Get-Departments) {
     }
 }
 
+# Create SG-FileServer-Admins group
+try {
+    New-ADGroup -Name "SG-FileServer-Admins" -SamAccountName "SG-FileServer-Admins" -GroupScope Global `
+            -GroupCategory Security -Path $GroupsOU
+}
+catch {
+    Write-Host "SG-FileServer-Admins already created"
+}
+
 $Existing = @{}
 Get-ADUser -Filter * | ForEach-Object { $Existing[$_.SamAccountName] = $true }
 

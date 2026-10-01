@@ -36,9 +36,18 @@ if (-not (Test-Path 'D:\')) { throw 'D: does not exist - bring the data disk onl
 # the lookup goes over the computer's own secure channel.
 function Set-FolderAcl {
     param([string]$Path, [string[]]$Grant)
-    New-Item -Path $Path -ItemType Directory -Force | Out-Null
-    icacls.exe $Path /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' @Grant | Out-Null
+    if (-not (Test-Path $Path)) { New-Item -Path $Path -ItemType Directory | Out-Null }
+    icacls.exe $Path /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" "$Domain\SG-FileServer-Admins:(OI)(CI)F" @Grant | Out-Null
     if ($LASTEXITCODE) { throw "icacls failed on $Path granting $Grant (exit $LASTEXITCODE) - does it exist in AD?" }
+}
+
+# Set access rights on the data drive
+Set-FolderAcl -Path D:\
+
+# If the Shares folder doesn't exist, create it
+if (-not (Test-Path $Base)) {
+    New-Item -Path $Base -ItemType Directory | Out-Null
+    Write-Host "Created $Base"
 }
 
 # Roots of Afdelinger and Privat: Domain Users may list, not write - no
@@ -52,8 +61,10 @@ $Shares = @(
     @{ Name = 'Afdelinger'; Grant = "$Domain\Domain Users:RX";        AccessBased = $true }
     @{ Name = 'Privat';     Grant = @("$Domain\Domain Users:(RD,X,RA,REA,RC,S,AD)", '*S-1-3-0:(OI)(CI)(IO)M'); AccessBased = $true }
 )
+
 foreach ($Share in $Shares) {
     $Path = "$Base\$($Share.Name)"
+
     Set-FolderAcl -Path $Path -Grant $Share.Grant
 
     if (Get-SmbShare -Name $Share.Name -ErrorAction SilentlyContinue) {
