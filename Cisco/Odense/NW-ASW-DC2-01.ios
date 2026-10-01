@@ -1,9 +1,42 @@
 hostname NW-ASW-DC2-01
 
 no ip domain lookup
-banner motd "Unauthorized access is prohibited"
+banner motd "
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+                  M I D D E L F A R T   R A C I N G
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+        Authorized use only. Activity is logged and monitored.
+        Unauthorized access may result in disciplinary action
+                         and/or prosecution.
+
+                  Contact: noc@middelfartracing.dk
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+
+"
 service password-encryption
 username cisco secret cisco
+
+ip default-gateway 10.0.99.1
+
+aaa new-model
+
+radius server SRV-RADIUS-01
+ address ipv4 10.0.10.16 auth-port 1812 acct-port 1813
+ key Password1!
+
+aaa group server radius SRV-RADIUS
+ server name SRV-RADIUS-01
+
+
+
+radius-server vsa send accounting
+
+aaa authorization exec VTY_AUTHOR group SRV-RADIUS local
+aaa authentication login VTY_AUTHEN group SRV-RADIUS local
+
+line vty 0 15
+ authorization exec VTY_AUTHOR
+ login authentication VTY_AUTHEN
 
 int vlan 99
 ip address 10.10.99.6 255.255.255.0
@@ -13,19 +46,46 @@ ip domain-name mfrace.internal
 crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
 
-line vty 0 4
+line vty 0 15
 password cisco
 transport input ssh
-exec-timeout 0
+exec-timeout 15 0
 login local
 
 line console 0
 password cisco
-exec-timeout 0
+exec-timeout 15 0
 login local
 end
 
 wr
+
+Vlan 10
+name Servere
+
+Vlan 20
+name Klienter
+
+Vlan 30
+name Backup
+
+Vlan 40
+name DMZ
+
+Vlan 99
+name Management
+
+Vlan 100
+name Guest
+
+Vlan 555
+name Registraion
+
+Vlan 666
+name Jail
+
+Vlan 999
+name Blackhole
 
 no username cisco secret cisco
 username cisco privilege 15 secret cisco
@@ -38,15 +98,10 @@ description "NW-DSW-DC2-01-1 | Port g1/0/45, g2/0/45"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
-
-Interface range g1/0/1-46
-switchport mode access
-switchport access vlan 99
+switchport trunk allowed vlan 10,20,30,40,99,100
 
 Interface range g1/0/47-48
 channel-protocol lacp
 channel-group 24 mode active
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
-
+switchport trunk allowed vlan 10,20,30,40,99,100

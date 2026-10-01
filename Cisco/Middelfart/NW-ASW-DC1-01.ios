@@ -3,9 +3,42 @@ username cisco secret cisco
 
 
 no ip domain lookup
-banner motd "Unauthorized access is prohibited"
+banner motd "
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+                  M I D D E L F A R T   R A C I N G
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+        Authorized use only. Activity is logged and monitored.
+        Unauthorized access may result in disciplinary action
+                         and/or prosecution.
+
+                  Contact: noc@middelfartracing.dk
+=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=o=
+
+"
 service password-encryption
 username cisco secret cisco
+
+ip default-gateway 10.10.99.1
+
+aaa new-model
+
+radius server SRV-RADIUS-01
+ address ipv4 10.0.10.16 auth-port 1812 acct-port 1813
+ key Password1!
+
+aaa group server radius SRV-RADIUS
+ server name SRV-RADIUS-01
+
+
+
+radius-server vsa send accounting
+
+aaa authorization exec VTY_AUTHOR group SRV-RADIUS local
+aaa authentication login VTY_AUTHEN group SRV-RADIUS local
+
+line vty 0 15
+ authorization exec VTY_AUTHOR
+ login authentication VTY_AUTHEN
 
 int vlan 99
 ip address 10.0.99.6 255.255.255.0
@@ -15,15 +48,15 @@ ip domain-name mfrace.internal
 crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
 
-line vty 0 4
+line vty 0 15
 password cisco
 transport input ssh
-exec-timeout 0
+exec-timeout 15 0
 login local
 
 line console 0
 password cisco
-exec-timeout 0
+exec-timeout 15 0
 login local
 end
 
@@ -36,19 +69,161 @@ username cisco privilege 15 secret cisco
 spanning-tree portfast default
 VTP mode transparent
 
+Vlan 10
+name Servere
+
+Vlan 20
+name Klienter
+
+Vlan 30
+name Backup
+
+Vlan 40
+name DMZ
+
+Vlan 99
+name Management
+
+Vlan 100
+name Guest
+
+Vlan 555
+name Registraion
+
+Vlan 666
+name Jail
+
+Vlan 999
+name Blackhole
+
+dot1x system-auth-control
+lldp run
+
+aaa authentication dot1x default group SRV-RADIUS
+aaa authorization network default group SRV-RADIUS
+aaa accounting identity default start-stop group SRV-RADIUS
+
+aaa server radius dynamic-author
+ client 10.0.10.16 server-key <RADIUS-SECRET>
+ port 3799
+ auth-type any
+
+radius server SRV-RADIUS-01
+ automate-tester username pf-probe ignore-acct-port idle-time 3
+
+radius-server dead-criteria time 5 tries 3
+radius-server deadtime 15
+radius-server vsa send authentication
+
+snmp-server community pf-public RO
+
+service-template PF_CRITICAL
+ vlan 20
+
+class-map type control subscriber match-all AAA_DOWN
+ match result-type aaa-timeout
+ match authorization-status unauthorized
+
+class-map type control subscriber match-all DOT1X_FAILED
+ match method dot1x
+ match result-type method dot1x authoritative
+
+class-map type control subscriber match-all DOT1X_NO_RESP
+ match method dot1x
+ match result-type method dot1x agent-not-found
+
+class-map type control subscriber match-all MAB_FAILED
+ match method mab
+ match result-type method mab authoritative
+
+policy-map type control subscriber PF-DOT1X-MAB
+ event session-started match-all
+  10 class always do-until-failure
+   10 authenticate using dot1x priority 10
+ event authentication-failure match-first
+  5 class AAA_DOWN do-until-failure
+   10 activate service-template PF_CRITICAL
+   20 authorize
+   30 pause reauthentication
+  10 class DOT1X_NO_RESP do-until-failure
+   10 terminate dot1x
+   20 authenticate using mab priority 20
+  20 class DOT1X_FAILED do-until-failure
+   10 terminate dot1x
+   20 authenticate using mab priority 20
+  30 class MAB_FAILED do-until-failure
+   10 terminate mab
+   20 authentication-restart 60
+  40 class always do-until-failure
+   10 terminate dot1x
+   20 terminate mab
+   30 authentication-restart 60
+ event agent-found match-all
+  10 class always do-until-failure
+   10 terminate mab
+   20 authenticate using dot1x priority 10
+ event aaa-available match-all
+  10 class always do-until-failure
+   10 clear-session
+ event violation match-all
+  10 class always do-until-failure
+   10 replace
+ event inactivity-timeout match-all
+  10 class always do-until-failure
+   10 clear-session
+
+template PF_ACCESS
+ description 802.1X/MAB - PacketFence
+ switchport mode access
+ switchport access vlan 555
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ dot1x pae authenticator
+ dot1x timeout quiet-period 2
+ dot1x timeout tx-period 3
+ mab
+ access-session host-mode single-host
+ access-session closed
+ access-session port-control auto
+ authentication periodic
+ authentication timer reauthenticate server
+ service-policy type control subscriber PF-DOT1X-MAB
+
+template PF_UNIFI_AP
+ description UniFi AP - pushed by PacketFence
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 20,99,100
+ access-session host-mode multi-host
+ access-session port-control auto
+ spanning-tree portfast edge trunk
+ spanning-tree bpduguard enable
+
 interface port-channel 24
 description "NW-DSW-DC1-01-1 | Port g1/0/45, g2/0/45"
 switchport mode trunk
 switchport trunk encapsulation dot1q
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666
 
-Interface range g1/0/1-46
+Interface range g1/0/1-8
+source template PF_ACCESS
+access-session interface-template sticky timer 30
+no snmp trap link-status
+
+Interface range g1/0/9-44, g1/0/46
 switchport mode access
 switchport access vlan 99
+
+interface GigabitEthernet1/0/45
+description "UNIFI-01"
+ switchport trunk allowed vlan 10,20,99
+ switchport trunk native vlan 99
+ switchport mode trunk
 
 Interface range g1/0/47-48
 channel-protocol lacp
 channel-group 24 mode active
+switchport mode trunk
 switchport trunk native vlan 999
-switchport trunk allowed vlan 10,20,30,40,99
+switchport trunk allowed vlan 10,20,30,40,99,100,555,666

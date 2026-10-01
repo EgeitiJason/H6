@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>802.1X Deployment Guide</title>
+<style>
+  :root {
+    --ink: #1b2330;
+    --muted: #5b6676;
+    --line: #d7dce3;
+    --accent: #b3122e;
+    --navy: #16233a;
+    --code-bg: #f4f6f9;
+    --note-bg: #eef4fb;
+    --note-line: #2f6db5;
+    --warn-bg: #fdf1f2;
+    --warn-line: #b3122e;
+    --ok-bg: #eef8f1;
+    --ok-line: #2e8b57;
+  }
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+    @bottom-left { content: "Middelfart Racing \2014  802.1X Deployment Guide"; font: 8pt "Segoe UI", Arial, sans-serif; color: #5b6676; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Segoe UI", Arial, sans-serif; color: #5b6676; }
+  }
+  @page cover {
+    margin: 0;
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font: 10pt/1.5 "Segoe UI", Arial, sans-serif; color: var(--ink); background: #fff; margin: 0; }
+  h1, h2, h3, h4 { color: var(--navy); line-height: 1.25; break-after: avoid; }
+  h1 { font-size: 20pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 2px solid var(--accent); }
+  h2 { font-size: 13.5pt; margin: 7mm 0 2.5mm; }
+  h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+  h4 { font-size: 10pt; margin: 4mm 0 1.5mm; color: var(--ink); }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin: 0 0 1mm; }
+  a { color: var(--note-line); text-decoration: none; }
+  code { font: 8.8pt Consolas, "Cascadia Mono", monospace; background: var(--code-bg); padding: 0 1mm; border-radius: 2px; }
+  pre { font: 8.4pt/1.42 Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border: 1px solid var(--line);
+        border-left: 3px solid var(--navy); border-radius: 3px; padding: 3mm 3.5mm; margin: 0 0 3.5mm; white-space: pre-wrap; break-inside: avoid; }
+  pre .c { color: #6a737d; }
+  pre .k { color: var(--accent); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 4mm; font-size: 9pt; break-inside: avoid; }
+  th { background: var(--navy); color: #fff; text-align: left; font-weight: 600; padding: 1.6mm 2mm; }
+  td { border-bottom: 1px solid var(--line); padding: 1.5mm 2mm; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9fb; }
+  .callout { border-left: 3px solid; border-radius: 3px; padding: 2.5mm 3.5mm; margin: 0 0 4mm; break-inside: avoid; }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .callout b.t { display: block; margin-bottom: 1mm; }
+  .note { background: var(--note-bg); border-color: var(--note-line); }
+  .warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .ok { background: var(--ok-bg); border-color: var(--ok-line); }
+  .chapter { break-before: page; }
+  .muted { color: var(--muted); }
+  .step { display: inline-block; background: var(--accent); color: #fff; font-weight: 700; font-size: 8pt;
+          border-radius: 2px; padding: 0.3mm 1.6mm; margin-right: 1.5mm; vertical-align: 1px; }
+  .tag { display: inline-block; font-size: 7.5pt; font-weight: 600; padding: 0.2mm 1.5mm; border-radius: 2px; }
+  .tag.new { background: #fbe3e7; color: var(--accent); }
+  .tag.chg { background: #fff1d6; color: #8a5a00; }
+  .tag.none { background: #e3f3e8; color: #1f6b41; }
+  .check td:first-child { width: 7mm; text-align: center; font-size: 11pt; color: var(--muted); }
+  figure { margin: 0 0 4mm; break-inside: avoid; }
+  figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; text-align: center; }
+
+  /* Cover */
+  .cover { page: cover; height: 297mm; width: 210mm; position: relative; background: var(--navy); color: #fff; overflow: hidden; }
+  .cover .band { position: absolute; left: 0; right: 0; top: 0; height: 8mm; background: var(--accent); }
+  .cover .inner { position: absolute; left: 22mm; right: 22mm; top: 70mm; }
+  .cover .org { letter-spacing: 3px; font-size: 10pt; color: #c9d3e3; margin-bottom: 10mm; }
+  .cover h1 { color: #fff; border: 0; font-size: 34pt; margin: 0 0 4mm; padding: 0; }
+  .cover .sub { font-size: 14pt; color: #dbe3ef; margin-bottom: 18mm; }
+  .cover table { width: 120mm; font-size: 10pt; }
+  .cover td { border: 0; background: transparent !important; color: #fff; padding: 1mm 0; }
+  .cover td:first-child { color: #9fb0c8; width: 36mm; }
+  .cover .foot { position: absolute; left: 22mm; right: 22mm; bottom: 18mm; font-size: 8.5pt; color: #9fb0c8; border-top: 1px solid #34466a; padding-top: 4mm; }
+
+  /* TOC */
+  .toc ol { list-style: none; padding: 0; counter-reset: none; }
+  .toc li { display: flex; border-bottom: 1px dotted var(--line); padding: 1.4mm 0; margin: 0; }
+  .toc li span:first-child { width: 10mm; color: var(--accent); font-weight: 700; }
+  .toc li.sub { padding-left: 10mm; font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<section class="cover">
+  <div class="band"></div>
+  <div class="inner">
+    <div class="org">M I D D E L F A R T &nbsp; R A C I N G</div>
+    <h1>802.1X Network Access Control</h1>
+    <div class="sub">Deployment guide for PacketFence, OPNsense and the Cisco access switches at Middelfart (DC1) and Odense (DC2)</div>
+    <table>
+      <tr><td>Document</td><td>Implementation guide</td></tr>
+      <tr><td>Version</td><td>1.1</td></tr>
+      <tr><td>Date</td><td>24 September 2026 (v1.1, corrected after the rollout)</td></tr>
+      <tr><td>Scope</td><td>NW-ASW-DC1-01, NW-ASW-DC2-01 (ports Gi1/0/1-46)</td></tr>
+      <tr><td>NAC server</td><td>SRV-RADIUS-01 &middot; PacketFence 15.2.0 &middot; 10.0.10.16</td></tr>
+      <tr><td>Status</td><td>In production at both sites (pilot completed)</td></tr>
+    </table>
+  </div>
+  <div class="foot">Internal document. This guide uses placeholders for secrets (&lt;RADIUS-SECRET&gt;, &lt;SNMP-RO&gt;). Never put real secrets in this document or in the Git repository.</div>
+</section>
+
+<!-- ============================ TOC ============================ -->
+<section class="chapter toc">
+  <h1>Contents</h1>
+  <ol>
+    <li><span>1</span><span>Summary and design</span></li>
+    <li><span>2</span><span>Current state (audited 18 Sep 2026)</span></li>
+    <li><span>3</span><span>Addressing plan and NetBox</span></li>
+    <li><span>4</span><span>PacketFence configuration</span></li>
+    <li><span>5</span><span>Proxmox (verification only)</span></li>
+    <li><span>6</span><span>OPNsense &ndash; Middelfart (DC1)</span></li>
+    <li><span>7</span><span>OPNsense &ndash; Odense (DC2)</span></li>
+    <li><span>8</span><span>Distribution switches (DSW)</span></li>
+    <li><span>9</span><span>Access switches (ASW): 802.1X + MAB</span></li>
+    <li><span>10</span><span>Automatic AP port configuration</span></li>
+    <li><span>11</span><span>Windows clients (Group Policy)</span></li>
+    <li><span>12</span><span>Pilot, verification and rollout</span></li>
+    <li><span>13</span><span>Troubleshooting</span></li>
+    <li><span>14</span><span>Rollback</span></li>
+    <li><span>A</span><span>Appendix: other findings from the audit</span></li>
+    <li><span>B</span><span>Appendix: implementation checklist</span></li>
+  </ol>
+</section>
+
+<!-- ============================ 1 ============================ -->
+<section class="chapter">
+  <h1>1 &nbsp;Summary and design</h1>
+  <p>This guide adds 802.1X port authentication, with MAC Authentication Bypass (MAB) as a fallback, to the access ports on both access switches. PacketFence (SRV-RADIUS-01) is the RADIUS server. It decides which VLAN each device gets:</p>
+  <table>
+    <tr><th style="width:30%">Device / situation</th><th style="width:22%">How it authenticates</th><th>Result</th></tr>
+    <tr><td>Domain user or computer</td><td>802.1X (PEAP-MSCHAPv2) against AD <code>mfrace.internal</code></td><td>Role <b>default</b> &rarr; VLAN <b>20 Klienter</b></td></tr>
+    <tr><td>Unknown or unregistered device</td><td>MAB (MAC address)</td><td>Role <b>registration</b> &rarr; VLAN <b>555</b> (captive portal)</td></tr>
+    <tr><td>Device that breaks policy</td><td>802.1X or MAB</td><td>Role <b>isolation</b> &rarr; VLAN <b>666 Jail</b></td></tr>
+    <tr><td>UniFi access point (one per site, Gi1/0/45)</td><td>MAB, MAC registered in PacketFence</td><td>Role <b>unifi_ap</b>. PacketFence pushes the interface template <code>PF_UNIFI_AP</code>, which turns the port into a trunk (native 99, tagged 20)</td></tr>
+    <tr><td>PacketFence unreachable</td><td>&ndash;</td><td>Critical authorization &rarr; VLAN 20 (users can keep working)</td></tr>
+  </table>
+
+  <h2>1.1 &nbsp;Design decisions</h2>
+  <ul>
+    <li><b>OPNsense stays the only router.</b> The DSWs only switch. The registration and jail networks get CARP gateways on the OPNsense HA pairs, just like the existing VLANs.</li>
+    <li><b>Middelfart is layer 2 to PacketFence.</b> PacketFence has its own interfaces in VLANs 555 and 666 at DC1 and serves DHCP and DNS there directly.</li>
+    <li><b>Odense is routed.</b> The Odense firewall relays DHCP to PacketFence over the existing route-based IPsec tunnel (<code>ipsec10</code>).</li>
+    <li><b>New per-site subnets:</b> registration <code>10.0.55.0/24</code> / <code>10.10.55.0/24</code>, jail <code>10.0.66.0/24</code> / <code>10.10.66.0/24</code>.</li>
+    <li><b>IBNS 2.0 (new-style) on the ASWs.</b> It's needed so PacketFence can push an interface template to the AP port. It also makes the port policy clearer.</li>
+    <li><b>Existing RADIUS group.</b> The ASWs already use <code>SRV-RADIUS</code> &rarr; 10.0.10.16 for VTY login. 802.1X reuses this group and leaves login untouched.</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 700 330" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="11">
+      <defs>
+        <style>
+          .box{fill:#fff;stroke:#16233a;stroke-width:1.3;rx:4}
+          .fw{fill:#fbe3e7;stroke:#b3122e;stroke-width:1.3}
+          .pf{fill:#e3f3e8;stroke:#2e8b57;stroke-width:1.3}
+          .site{fill:#f4f6f9;stroke:#c3cad4;stroke-dasharray:4 3}
+          .t{fill:#1b2330}.s{fill:#5b6676;font-size:9.5px}.h{font-weight:700;fill:#16233a;font-size:12px}
+          .ln{stroke:#16233a;stroke-width:1.4;fill:none}.ip{stroke:#b3122e;stroke-width:2;stroke-dasharray:6 4;fill:none}
+        </style>
+      </defs>
+      <rect class="site" x="8" y="8" width="330" height="314" rx="8"/>
+      <rect class="site" x="362" y="8" width="330" height="314" rx="8"/>
+      <text class="h" x="20" y="28">Middelfart (DC1)</text>
+      <text class="h" x="374" y="28">Odense (DC2)</text>
+
+      <rect class="fw" x="40" y="42" width="170" height="44" rx="4"/>
+      <text class="t" x="52" y="60" font-weight="600">OPNsense HA (CARP)</text>
+      <text class="s" x="52" y="76">VIP 10.0.55.1 / 10.0.66.1</text>
+      <rect class="fw" x="490" y="42" width="170" height="44" rx="4"/>
+      <text class="t" x="502" y="60" font-weight="600">OPNsense HA (CARP)</text>
+      <text class="s" x="502" y="76">VIP 10.10.55.1 / 10.10.66.1 + relay</text>
+      <path class="ip" d="M210 64 L490 64"/>
+      <text class="s" x="290" y="56" fill="#b3122e">IPsec ipsec10</text>
+
+      <rect class="box" x="40" y="122" width="170" height="40" rx="4"/>
+      <text class="t" x="52" y="140" font-weight="600">NW-DSW-DC1 (3750G)</text>
+      <text class="s" x="52" y="154">L2 only &middot; Po45 &rarr; ASW</text>
+      <rect class="box" x="490" y="122" width="170" height="40" rx="4"/>
+      <text class="t" x="502" y="140" font-weight="600">NW-DSW-DC2 (3750G)</text>
+      <text class="s" x="502" y="154">L2 only &middot; Po45 &rarr; ASW</text>
+      <path class="ln" d="M125 86 L125 122"/><path class="ln" d="M575 86 L575 122"/>
+
+      <rect class="pf" x="228" y="112" width="100" height="62" rx="4"/>
+      <text class="t" x="236" y="130" font-weight="600">PacketFence</text>
+      <text class="s" x="236" y="143">PVE-DC1-01-3</text>
+      <text class="s" x="236" y="155">eth1 10.0.55.10</text>
+      <text class="s" x="236" y="167">eth2 10.0.66.10</text>
+      <path class="ln" d="M210 142 L228 142"/>
+
+      <rect class="box" x="40" y="198" width="170" height="40" rx="4"/>
+      <text class="t" x="52" y="216" font-weight="600">NW-ASW-DC1-01 (2960X)</text>
+      <text class="s" x="52" y="230">802.1X/MAB on Gi1/0/1-46</text>
+      <rect class="box" x="490" y="198" width="170" height="40" rx="4"/>
+      <text class="t" x="502" y="216" font-weight="600">NW-ASW-DC2-01 (2960X)</text>
+      <text class="s" x="502" y="230">802.1X/MAB on Gi1/0/1-46</text>
+      <path class="ln" d="M125 162 L125 198"/><path class="ln" d="M575 162 L575 198"/>
+
+      <rect class="box" x="24" y="268" width="92" height="40" rx="4"/>
+      <text class="t" x="32" y="285" font-weight="600">Clients</text>
+      <text class="s" x="32" y="299">555 &rarr; 20 / 666</text>
+      <rect class="box" x="130" y="268" width="96" height="40" rx="4"/>
+      <text class="t" x="138" y="285" font-weight="600">UniFi AP</text>
+      <text class="s" x="138" y="299">Gi1/0/45 trunk</text>
+      <path class="ln" d="M85 238 L70 268"/><path class="ln" d="M160 238 L178 268"/>
+      <rect class="box" x="474" y="268" width="92" height="40" rx="4"/>
+      <text class="t" x="482" y="285" font-weight="600">Clients</text>
+      <text class="s" x="482" y="299">555 &rarr; 20 / 666</text>
+      <rect class="box" x="580" y="268" width="96" height="40" rx="4"/>
+      <text class="t" x="588" y="285" font-weight="600">UniFi AP</text>
+      <text class="s" x="588" y="299">Gi1/0/45 trunk</text>
+      <path class="ln" d="M535 238 L520 268"/><path class="ln" d="M610 238 L628 268"/>
+    </svg>
+    <figcaption>Figure 1 &ndash; Target design. RADIUS/CoA from both ASWs goes to 10.0.10.16. Odense DHCP for 555/666 is relayed over IPsec.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ 2 ============================ -->
+<section class="chapter">
+  <h1>2 &nbsp;Current state (audited 18 Sep 2026)</h1>
+  <p>The values in this guide come from the live devices, not only from the repository.</p>
+
+  <h2>2.1 &nbsp;Devices</h2>
+  <table>
+    <tr><th>Device</th><th>Model / software</th><th>Relevant finding</th></tr>
+    <tr><td>NW-ASW-DC1-01 (10.0.99.6)</td><td>WS-C2960X-48FPS-L, IOS 15.2(7)E10</td><td>VLANs 10, 99 only. Gi1/0/45 = AP trunk (native 99, allowed 10,20,99). No 802.1X yet. LLDP off.</td></tr>
+    <tr><td>NW-ASW-DC2-01 (10.10.99.6)</td><td>WS-C2960X-48FPS-L, IOS 15.2(7)E9</td><td>VLAN 99 only. Gi1/0/45 is an access port in VLAN 99 and is <i>notconnect</i>, so the AP isn't plugged in.</td></tr>
+    <tr><td>NW-DSW-DC1 stack (10.0.99.4)</td><td>2&times; WS-C3750G-48PS-S, 15.0(2)SE9, VTP transparent</td><td>VLANs 555/666 exist. They're on the PVE and firewall trunks (Po1/4/7/47/48) but <b>not on Po45 to the ASW</b>.</td></tr>
+    <tr><td>NW-DSW-DC2 stack (10.10.99.4)</td><td>2&times; WS-C3750G-48TS-S, 15.0(2)SE11, VTP server</td><td>VLANs 555/666 exist. <b>Not on Po45 (ASW) or Po47/48 (firewalls)</b>.</td></tr>
+    <tr><td>OPNsense DC1 (10.0.99.2 / VIP .1)</td><td>OPNsense 26.7.3, CARP HA, sync peer 192.168.2.2</td><td><code>lagg0</code> trunk. Route-based IPsec <code>ipsec10</code>, with route 10.10.0.0/16 &rarr; tunnel. No 555/666 interfaces.</td></tr>
+    <tr><td>OPNsense DC2 (10.10.99.2 / VIP .1)</td><td>OPNsense 26.7.4, CARP HA, sync peer 192.168.2.2</td><td>Route 10.0.0.0/16 &rarr; <code>ipsec10</code>. DHCRelay (Client, MGMT) &rarr; <code>SRV-RELAY</code>. No 555/666 interfaces.</td></tr>
+    <tr><td>SRV-RADIUS-01 (10.0.10.16)</td><td>PacketFence 15.2.0, VM 111 on HYP-PVE-DC1-01-3</td><td>Joined to AD <code>MFRACE</code>. AD source <code>mfrace</code> (LDAPS). Wrong switch types. Invalid jail interface IP. Default example EAP certificate.</td></tr>
+  </table>
+
+  <h2>2.2 &nbsp;Problems this guide fixes</h2>
+  <table>
+    <tr><th style="width:6%">#</th><th style="width:44%">Problem</th><th>Fixed in</th></tr>
+    <tr><td>1</td><td>PacketFence <code>eth2</code> is 10.66.6.0/24 (the network address)</td><td>&sect;4.1 &ndash; new addressing</td></tr>
+    <tr><td>2</td><td>Registration DHCP pool starts at PacketFence's own IP</td><td>&sect;4.2</td></tr>
+    <tr><td>3</td><td>ASW entries in PacketFence are type <code>Cisco::Catalyst_2970</code></td><td>&sect;4.4 &ndash; Cisco IOS v15.0</td></tr>
+    <tr><td>4</td><td>No registration, isolation or default VLAN mapping (built-in defaults are 2/3)</td><td>&sect;4.3</td></tr>
+    <tr><td>5</td><td>VLANs 20/555/666 missing on the ASWs. 555/666 missing on several trunks</td><td>&sect;8, &sect;9.2</td></tr>
+    <tr><td>6</td><td>RADIUS server certificate is the example certificate (<i>Example Inc.</i>)</td><td>&sect;4.7</td></tr>
+    <tr><td>7</td><td>Sample switch entries 192.168.0.1 and 192.168.1.0/24</td><td>&sect;4.4</td></tr>
+  </table>
+</section>
+
+<!-- ============================ 3 ============================ -->
+<section class="chapter">
+  <h1>3 &nbsp;Addressing plan and NetBox</h1>
+  <table>
+    <tr><th>Site</th><th>VLAN</th><th>Prefix</th><th>Gateway (CARP VIP)</th><th>FW node A / B</th><th>PacketFence</th><th>DHCP pool</th></tr>
+    <tr><td>Middelfart</td><td>555 Registration</td><td>10.0.55.0/24</td><td>10.0.55.1</td><td>.2 / .3</td><td>10.0.55.10 (eth1)</td><td>.20 &ndash; .250</td></tr>
+    <tr><td>Middelfart</td><td>666 Jail</td><td>10.0.66.0/24</td><td>10.0.66.1</td><td>.2 / .3</td><td>10.0.66.10 (eth2)</td><td>.20 &ndash; .250</td></tr>
+    <tr><td>Odense</td><td>555 Registration</td><td>10.10.55.0/24</td><td>10.10.55.1</td><td>.2 / .3</td><td>relayed &rarr; 10.0.55.10</td><td>.20 &ndash; .250</td></tr>
+    <tr><td>Odense</td><td>666 Jail</td><td>10.10.66.0/24</td><td>10.10.66.1</td><td>.2 / .3</td><td>relayed &rarr; 10.0.66.10</td><td>.20 &ndash; .250</td></tr>
+  </table>
+  <p>Reserved addresses: <code>.1</code> is the CARP VIP, <code>.2/.3</code> are the firewall nodes, <code>.10</code> is PacketFence, and <code>.11&ndash;.19</code> are spare.</p>
+
+  <h2>3.1 &nbsp;NetBox (10.0.10.21)</h2>
+  <ol>
+    <li>Delete the prefixes <code>10.55.5.0/24</code> and <code>10.66.6.0/24</code>.</li>
+    <li>Create the four prefixes above. Link them to their site (Middelfart / Odense) and VLAN (555 / 666 for that site).</li>
+    <li>Create IP addresses for the gateways (.1, role <i>CARP</i>), firewall nodes (.2/.3) and PacketFence (.10). Mark the DHCP ranges as <i>IP Ranges</i>.</li>
+    <li>Fix the typo in the VLAN name: <i>Vlan 555 - Registraion</i> &rarr; <i>Registration</i>.</li>
+  </ol>
+</section>
+
+<!-- ============================ 4 ============================ -->
+<section class="chapter">
+  <h1>4 &nbsp;PacketFence configuration</h1>
+  <p>Web admin: <code>https://10.0.10.16:1443</code>. Before you start, back up the configuration from the shell:</p>
+<pre>tar czf /root/pf-conf-$(date +%F).tgz /usr/local/pf/conf</pre>
+
+  <h2>4.1 &nbsp;Interfaces</h2>
+  <p><i>Configuration &rarr; Network Configuration &rarr; Interfaces</i></p>
+  <table>
+    <tr><th>Interface</th><th>Proxmox tag</th><th>Old IP</th><th>New IP</th><th>Type</th><th>Enforcement</th></tr>
+    <tr><td>eth0</td><td>10</td><td>10.0.10.16/24</td><td><i>unchanged</i></td><td>Management</td><td>&ndash;</td></tr>
+    <tr><td>eth1</td><td>555</td><td>10.55.5.10/24</td><td><b>10.0.55.10/24</b></td><td>Registration</td><td>VLAN</td></tr>
+    <tr><td>eth2</td><td>666</td><td>10.66.6.0/24</td><td><b>10.0.66.10/24</b></td><td>Isolation</td><td>VLAN</td></tr>
+  </table>
+
+  <h2>4.2 &nbsp;Networks</h2>
+  <p><i>Configuration &rarr; Network Configuration &rarr; Networks</i>. Delete <code>10.55.5.0</code> and <code>10.66.6.0</code>, then create these four:</p>
+  <table>
+    <tr><th>Network</th><th>Type</th><th>Gateway</th><th>DNS</th><th>Next hop</th><th>DHCP range</th></tr>
+    <tr><td>10.0.55.0/24</td><td>Registration</td><td>10.0.55.1</td><td>10.0.55.10</td><td>&ndash;</td><td>10.0.55.20 &ndash; 10.0.55.250</td></tr>
+    <tr><td>10.0.66.0/24</td><td>Isolation</td><td>10.0.66.1</td><td>10.0.66.10</td><td>&ndash;</td><td>10.0.66.20 &ndash; 10.0.66.250</td></tr>
+    <tr><td>10.10.55.0/24</td><td>Registration (routed)</td><td>10.10.55.1</td><td>10.0.55.10</td><td><b>10.0.55.1</b></td><td>10.10.55.20 &ndash; 10.10.55.250</td></tr>
+    <tr><td>10.10.66.0/24</td><td>Isolation (routed)</td><td>10.10.66.1</td><td>10.0.66.10</td><td><b>10.0.66.1</b></td><td>10.10.66.20 &ndash; 10.10.66.250</td></tr>
+  </table>
+  <p><b>Gateway on the Middelfart networks:</b> PacketFence always uses its own interface IP as the clients' gateway on a layer 2 network, so 10.0.55.10 and 10.0.66.10. The field is not shown in the UI and cannot be set to the firewall VIP. Only the routed Odense networks take a gateway (the OPNsense VIP) and a next hop.</p>
+  <p>For all four, enable <i>DHCP server</i> and <i>DNS</i>, set the lease time to 30 seconds, and leave NAT disabled. The next hop is a CARP VIP, so PacketFence's return routes survive a firewall failover.</p>
+
+  <h2>4.3 &nbsp;Roles and the switch group</h2>
+  <p><i>Configuration &rarr; Policies and Access Control &rarr; Roles</i>: create the role <code>unifi_ap</code> (<i>UniFi access points</i>). Use an underscore, not a hyphen, because the name becomes part of a configuration key.</p>
+  <p><i>&hellip; &rarr; Network Devices &rarr; Switch Groups &rarr; middelfart-racing</i>:</p>
+  <table>
+    <tr><th style="width:38%">Tab / setting</th><th>Value</th></tr>
+    <tr><td>Definition &rarr; Type</td><td>Cisco IOS v15.0</td></tr>
+    <tr><td>Definition &rarr; Mode</td><td>Production (individual switches override this to <i>Testing</i> during the pilot)</td></tr>
+    <tr><td>Definition &rarr; Deauthentication method</td><td>RADIUS</td></tr>
+    <tr><td>Definition &rarr; Use CoA</td><td>Enabled</td></tr>
+    <tr><td>Roles &rarr; Role by VLAN ID</td><td>Enabled</td></tr>
+    <tr><td>&nbsp;&nbsp;registration / isolation</td><td>555 / 666</td></tr>
+    <tr><td>&nbsp;&nbsp;default</td><td>20</td></tr>
+    <tr><td>&nbsp;&nbsp;unifi_ap</td><td>99</td></tr>
+    <tr><td>RADIUS &rarr; Secret passphrase</td><td>&lt;RADIUS-SECRET&gt; (unchanged, already set)</td></tr>
+    <tr><td>SNMP &rarr; Version / Community read</td><td>v2c / &lt;SNMP-RO&gt;</td></tr>
+  </table>
+
+  <h2>4.4 &nbsp;Switches</h2>
+  <p><i>&hellip; &rarr; Network Devices &rarr; Switches</i>. Edit the existing entries. Don't create new ones.</p>
+  <table>
+    <tr><th>Switch</th><th>Description</th><th>Type</th><th>Mode</th></tr>
+    <tr><td>10.0.99.6</td><td>NW-ASW-DC1-01</td><td><b>Cisco IOS v15.0</b> (was Catalyst_2970)</td><td>Testing &rarr; Production after the pilot</td></tr>
+    <tr><td>10.10.99.6</td><td>NW-ASW-DC2-01</td><td><b>Cisco IOS v15.0</b> (was Catalyst_2970)</td><td>Testing &rarr; Production after the pilot</td></tr>
+    <tr><td>10.0.99.7 / 10.10.99.7</td><td>NW-OOB-DC*-01</td><td>Cisco IOS v15.0 (was Catalyst_2970). No 802.1X on these.</td><td>unchanged</td></tr>
+    <tr><td>192.168.0.1, 192.168.1.0/24</td><td>PacketFence sample entries</td><td colspan="2"><b>Delete</b></td></tr>
+  </table>
+  <div class="callout note"><b class="t">If CoA doesn't work</b>If VLAN changes after registration don't take effect during the pilot, change the ASW type to <b>Cisco IOS v15.5</b> and test again. Both modules support Catalyst 2960 switches.</div>
+
+  <h2>4.5 &nbsp;Active Directory source and 802.1X</h2>
+  <p>The AD source <code>mfrace</code> already exists (LDAPS, <code>srv-adds-01/02.mfrace.internal</code>, base DN <code>DC=mfrace,DC=internal</code>), and PacketFence is joined to the domain <code>MFRACE</code>. Add or check the authentication rule:</p>
+  <table>
+    <tr><th style="width:30%">Rule (class: authentication)</th><th>Condition</th><th>Actions</th></tr>
+    <tr><td><code>catchall</code> in source <code>mfrace</code></td><td>match all</td><td><i>Role</i> = <code>default</code>, <i>Access duration</i> = 1 day (reauthentication renews it)</td></tr>
+  </table>
+  <p><b>Realms (required).</b> Windows sends the user as <code>MFRACE&bsol;user</code>. PacketFence only strips the domain for realms it knows, so without these the AD lookup searches for <code>sAMAccountName=MFRACE&bsol;user</code>, matches nothing and the login is rejected. Under <i>Policies and Access Control &rarr; Realms</i> create <code>MFRACE</code> and <code>mfrace.internal</code>, both with domain <code>mfrace</code> and <i>Strip on RADIUS authorization</i> enabled, and list them as the source's associated realms.</p>
+  <p><b>Computer authentication.</b> A computer authenticates as <code>host/PC.mfrace.internal</code>, which no AD account carries as its name. Add <code>dNSHostName</code> to <i>Search Attributes</i> on the <code>mfrace</code> source, otherwise no rule matches and every PC is rejected before a user logs in.</p>
+  <p>Then create a connection profile under <i>Policies and Access Control &rarr; Connection Profiles</i>:</p>
+  <table>
+    <tr><th style="width:38%">Setting</th><th>Value</th></tr>
+    <tr><td>Profile name</td><td><code>wired-dot1x</code></td></tr>
+    <tr><td>Filter</td><td><i>Connection Type</i> = <code>Ethernet-EAP</code></td></tr>
+    <tr><td>Sources</td><td><code>mfrace</code></td></tr>
+    <tr><td>Automatically register devices</td><td>Enabled</td></tr>
+  </table>
+  <p>The default profile stays in place for MAB and unregistered devices, which get the captive portal. Remove the Email, SMS and Sponsor sources from the default profile unless you want guest self-registration.</p>
+
+  <h2>4.6 &nbsp;UniFi AP: node and RADIUS filter</h2>
+  <ol>
+    <li><i>Nodes &rarr; Create</i>: MAC <code>9c:05:d6:ba:c1:c9</code> (Middelfart AP, seen on NW-ASW-DC1-01 Gi1/0/45). Status <i>registered</i>, role <code>unifi_ap</code>, unregistration date <i>none</i>, notes "UniFi AP DC1".</li>
+    <li>Look up the MAC of the Odense AP in the UniFi controller (SRV-UNIFI-01) and register it the same way. It isn't connected today.</li>
+    <li><i>Configuration &rarr; Advanced Access Configuration &rarr; Filter Engines &rarr; RADIUS Filters</i>: add the filter below. Or add it to <code>/usr/local/pf/conf/radius_filters.conf</code> and run <code>pfcmd configreload hard</code>.</li>
+  </ol>
+<pre>[UNIFI_AP_TEMPLATE]
+status=enabled
+description=Push the PF_UNIFI_AP interface template to UniFi AP ports
+top_op=and
+condition=node_info.category == "unifi_ap"
+scopes=returnRadiusAccessAccept
+merge_answer=yes
+answer.0=Cisco-AVPair = interface-template-name=PF_UNIFI_AP</pre>
+  <div class="callout warn"><b class="t">Security note</b>MAB only checks a MAC address, and MAC addresses can be spoofed. Anyone who copies the AP MAC and plugs into an access port gets a trunk to VLANs 20 and 99. Keep the AP ports physically secured. If that's not good enough, use the static fallback in &sect;10.4 and restrict it with port security.</div>
+
+  <h2>4.7 &nbsp;RADIUS server certificate</h2>
+  <p>PacketFence still uses the example certificate (<i>CN=Example Server Certificate</i>). Windows clients that validate the server certificate won't connect with it, so replace it before the pilot:</p>
+  <ol>
+    <li>Request a certificate from the AD CS CA (SRV-PKI-02 is running. SRV-PKI-01 is currently stopped). Subject/SAN: <code>srv-radius-01.mfrace.internal</code>. EKU: <i>Server Authentication</i>.</li>
+    <li>Upload it under <i>Configuration &rarr; System Configuration &rarr; SSL Certificates &rarr; RADIUS</i> together with the private key and the CA chain.</li>
+    <li>Restart RADIUS: <code>/usr/local/pf/bin/pfcmd service radiusd restart</code>.</li>
+  </ol>
+
+  <h2>4.8 &nbsp;Apply</h2>
+<pre>/usr/local/pf/bin/pfcmd configreload hard
+/usr/local/pf/bin/pfcmd service pf restart
+/usr/local/pf/bin/pfcmd service pf status | grep -Ev "started|disabled"   <span class="c"># should print nothing</span></pre>
+</section>
+
+<!-- ============================ 5 ============================ -->
+<section class="chapter">
+  <h1>5 &nbsp;Proxmox (verification only)</h1>
+  <p>PacketFence runs as <b>VM 111 SRV-RADIUS-01</b> on <b>HYP-PVE-DC1-01-3</b> (10.0.99.14). Its NICs are already tagged correctly on the VLAN-aware bridge <code>vmbr0</code>, and the host trunk (DSW Po7) already carries 555/666. <span class="tag none">NO CHANGE</span></p>
+<pre>net0: virtio=BC:24:11:60:38:67,bridge=vmbr0,tag=10     <span class="c"># eth0 management</span>
+net1: virtio=BC:24:11:6F:4B:6D,bridge=vmbr0,tag=555    <span class="c"># eth1 registration</span>
+net2: virtio=BC:24:11:21:53:79,bridge=vmbr0,tag=666    <span class="c"># eth2 isolation</span></pre>
+  <div class="callout note"><b class="t">HA / migration</b>All three DC1 hosts have the same <code>vmbr0</code> (VLAN-aware, <code>bridge-vids 2-4094</code>), and all three host trunks (Po1, Po4, Po7) carry 555/666. The VM can live-migrate without any network changes.</div>
+</section>
+
+<!-- ============================ 6 ============================ -->
+<section class="chapter">
+  <h1>6 &nbsp;OPNsense &ndash; Middelfart (DC1)</h1>
+  <p>HA pair NW-FW-EDGE-DC1-01 (MASTER, <code>.2</code>) and NW-FW-EDGE-DC1-02 (<code>.3</code>). The DSW trunks to both firewalls (Po47, Po48) already carry 555/666.</p>
+
+  <h2>6.1 &nbsp;VLAN devices and interfaces (on <u>both</u> nodes)</h2>
+  <p>OPNsense HA sync does <b>not</b> sync VLAN devices or interface assignments. Do steps 1&ndash;2 on each node.</p>
+  <ol>
+    <li><i>Interfaces &rarr; Devices &rarr; VLAN</i>: add <code>lagg0</code> tag <b>555</b> (description <i>REG</i>) and <code>lagg0</code> tag <b>666</b> (<i>JAIL</i>).</li>
+    <li><i>Interfaces &rarr; Assignments</i>: assign both, enable them, and set static IPv4:
+      <table>
+        <tr><th>Interface</th><th>Device</th><th>NW-FW-EDGE-DC1-01</th><th>NW-FW-EDGE-DC1-02</th></tr>
+        <tr><td>REG</td><td>lagg0_vlan555</td><td>10.0.55.2/24</td><td>10.0.55.3/24</td></tr>
+        <tr><td>JAIL</td><td>lagg0_vlan666</td><td>10.0.66.2/24</td><td>10.0.66.3/24</td></tr>
+      </table>
+    </li>
+  </ol>
+
+  <h2>6.2 &nbsp;CARP VIPs, aliases and rules (on the master, then sync)</h2>
+  <p><i>Interfaces &rarr; Virtual IPs &rarr; Settings</i>:</p>
+  <table>
+    <tr><th>Mode</th><th>Interface</th><th>Address</th><th>VHID</th><th>Description</th></tr>
+    <tr><td>CARP</td><td>REG</td><td>10.0.55.1/24</td><td>55</td><td>REG gateway</td></tr>
+    <tr><td>CARP</td><td>JAIL</td><td>10.0.66.1/24</td><td>66</td><td>JAIL gateway</td></tr>
+  </table>
+  <p><i>Firewall &rarr; Aliases</i>: <code>PF_REG</code> = 10.0.55.10, <code>PF_JAIL</code> = 10.0.66.10.</p>
+  <p><i>Firewall &rarr; Rules &rarr; REG</i> (JAIL is identical with <code>JAIL net</code> / <code>PF_JAIL</code>):</p>
+  <table>
+    <tr><th>#</th><th>Action</th><th>Proto</th><th>Source</th><th>Destination</th><th>Port</th><th>Description</th></tr>
+    <tr><td>1</td><td>Pass</td><td>UDP</td><td>REG net</td><td>PF_REG</td><td>67</td><td>DHCP (unicast renew)</td></tr>
+    <tr><td>2</td><td>Pass</td><td>TCP/UDP</td><td>REG net</td><td>PF_REG</td><td>53</td><td>DNS</td></tr>
+    <tr><td>3</td><td>Pass</td><td>TCP</td><td>REG net</td><td>PF_REG</td><td>80, 443</td><td>Captive portal</td></tr>
+    <tr><td>4</td><td>Block + log</td><td>any</td><td>REG net</td><td>any</td><td>any</td><td>Everything else</td></tr>
+  </table>
+  <div class="callout warn"><b class="t">Don't enable DHCP here</b>PacketFence serves DHCP directly in VLANs 555/666 at DC1. Don't enable Kea or dnsmasq on REG/JAIL, and don't add them to DHCRelay.</div>
+
+  <h2>6.3 &nbsp;What doesn't change at DC1</h2>
+  <table>
+    <tr><th style="width:30%">Item</th><th>Why no change is needed</th></tr>
+    <tr><td>IPsec</td><td>Route-based. The existing route 10.10.0.0/16 &rarr; <code>ipsec10</code> already covers 10.10.55/66, and <code>ipsec10</code> passes all inbound traffic.</td></tr>
+    <tr><td>Outbound NAT</td><td>Only alias <code>NAT_Primary</code> is NATed. 10.0.55/66 aren't in it, so registration and jail clients get no internet access.</td></tr>
+    <tr><td>RADIUS / CoA / SNMP</td><td>MGMT and SRV pass all inbound traffic, so switch &harr; 10.0.10.16 on UDP 1812/1813/3799/161 already works.</td></tr>
+    <tr><td>DHCRelay <code>SRV-RELAY</code></td><td>Already sends Client and MGMT DHCP to 10.0.10.16 as well, which PacketFence uses for device fingerprinting.</td></tr>
+  </table>
+  <p>Finally, go to <i>System &rarr; High Availability &rarr; Status</i> and click <b>Synchronize and reconfigure all</b>. On the backup node, check that the VIPs show as <i>BACKUP</i>.</p>
+</section>
+
+<!-- ============================ 7 ============================ -->
+<section class="chapter">
+  <h1>7 &nbsp;OPNsense &ndash; Odense (DC2)</h1>
+  <p>HA pair NW-FW-EDGE-DC2-01 (MASTER, <code>.2</code>) and NW-FW-EDGE-DC2-02 (<code>.3</code>). Follow the same steps as &sect;6.1 and &sect;6.2, with these values:</p>
+  <table>
+    <tr><th>Interface</th><th>Device</th><th>Node 01</th><th>Node 02</th><th>CARP VIP (VHID)</th></tr>
+    <tr><td>REG</td><td>lagg0_vlan555</td><td>10.10.55.2/24</td><td>10.10.55.3/24</td><td>10.10.55.1 (55)</td></tr>
+    <tr><td>JAIL</td><td>lagg0_vlan666</td><td>10.10.66.2/24</td><td>10.10.66.3/24</td><td>10.10.66.1 (66)</td></tr>
+  </table>
+  <p>Create the aliases <code>PF_REG</code> = 10.0.55.10 and <code>PF_JAIL</code> = 10.0.66.10. Use the same four rules per interface as &sect;6.2, with rule 1 changed to allow DHCP to the firewall for the relay:</p>
+  <table>
+    <tr><th>#</th><th>Action</th><th>Proto</th><th>Source</th><th>Destination</th><th>Port</th><th>Description</th></tr>
+    <tr><td>1</td><td>Pass</td><td>UDP</td><td>any</td><td>any</td><td>67</td><td>DHCP to the relay</td></tr>
+    <tr><td>2&ndash;4</td><td colspan="6">As in &sect;6.2 (DNS and portal to <code>PF_REG</code> / <code>PF_JAIL</code>, then block + log)</td></tr>
+  </table>
+
+  <h2>7.1 &nbsp;DHCP relay</h2>
+  <p><i>Services &rarr; DHCRelay</i>. Create two <b>new destinations</b>. Don't reuse <code>SRV-RELAY</code>, because it also contains 10.0.10.12 and 10.0.10.13, and those DHCP servers would answer registration clients too.</p>
+  <table>
+    <tr><th>Destination</th><th>Server</th></tr>
+    <tr><td>PF-REG</td><td>10.0.55.10</td></tr>
+    <tr><td>PF-JAIL</td><td>10.0.66.10</td></tr>
+  </table>
+  <table>
+    <tr><th>Relay interface</th><th>Destination</th><th>CARP depend on</th><th>Agent info</th></tr>
+    <tr><td>REG</td><td>PF-REG</td><td>VIP 10.10.55.1</td><td>off</td></tr>
+    <tr><td>JAIL</td><td>PF-JAIL</td><td>VIP 10.10.66.1</td><td>off</td></tr>
+  </table>
+  <p>Setting <i>CARP depend on</i> matches your existing relays and makes only the MASTER relay, so PacketFence never sees duplicate requests.</p>
+
+  <h2>7.2 &nbsp;What doesn't change at DC2</h2>
+  <ul>
+    <li><b>Routing:</b> the route 10.0.0.0/16 &rarr; <code>ipsec10</code> already exists, and <code>ipsec10</code> passes all inbound traffic.</li>
+    <li><b>RADIUS and CoA:</b> MGMT passes all inbound traffic, and PacketFence's CoA to 10.10.99.6 arrives over <code>ipsec10</code>.</li>
+    <li><b>NAT:</b> 10.10.55/66 aren't in <code>NAT_Primary</code>, so there's no internet access for these networks.</li>
+  </ul>
+  <p>Synchronize to the backup node as in &sect;6.3.</p>
+</section>
+
+<!-- ============================ 8 ============================ -->
+<section class="chapter">
+  <h1>8 &nbsp;Distribution switches (DSW)</h1>
+  <p>The DSWs only switch (<code>ip default-gateway</code>, no <code>ip routing</code>). They need no SVIs, ACLs or helper addresses. The only change is to allow VLANs 555/666 on the trunks that are missing them.</p>
+
+  <h2>8.1 &nbsp;NW-DSW-DC1 (10.0.99.4)</h2>
+<pre><span class="c">! 555/666 already on Po1/Po4/Po7 (PVE) and Po47/Po48 (firewalls)</span>
+configure terminal
+interface Port-channel45
+ description "NW-ASW-DC1-01 | Port g1/0/47-48"
+ switchport trunk allowed vlan add 555,666
+end
+write memory</pre>
+
+  <h2>8.2 &nbsp;NW-DSW-DC2 (10.10.99.4)</h2>
+<pre><span class="c">! VLANs 555/666 already exist (VTP server). Only the trunks are missing them.</span>
+configure terminal
+interface range Port-channel45 , Port-channel47 - 48
+ switchport trunk allowed vlan add 555,666
+end
+write memory</pre>
+
+  <h2>8.3 &nbsp;Verify</h2>
+<pre>show interfaces trunk | include Po45|Po47|Po48
+show spanning-tree vlan 555,666 | include Po</pre>
+</section>
+
+<!-- ============================ 9 ============================ -->
+<section class="chapter">
+  <h1>9 &nbsp;Access switches (ASW): 802.1X + MAB</h1>
+  <p>Apply the same configuration to <b>NW-ASW-DC1-01</b> and <b>NW-ASW-DC2-01</b>. Start at DC1.</p>
+  <div class="callout warn"><b class="t">Before you start</b>
+    <ul>
+      <li>Connect a console cable, or schedule <code>reload in 20</code>, and cancel it with <code>reload cancel</code> once everything works.</li>
+      <li>Back up the config: <code>copy running-config flash:pre-dot1x.cfg</code>.</li>
+      <li><code>authentication convert-to new-style</code> is <b>one-way</b>. You can only get back to legacy mode by restoring the backup config and reloading (&sect;14).</li>
+      <li>Identify the devices that are online today in VLAN 99: DC1 Gi1/0/37, 38, 46 and DC2 Gi1/0/46. Once 802.1X is on, they'll land in VLAN 20 or 555 instead. If they need management access, exclude those ports (&sect;9.5).</li>
+    </ul>
+  </div>
+
+  <h2>9.1 &nbsp;Switch to IBNS 2.0</h2>
+<pre>configure terminal
+authentication convert-to new-style
+<span class="c">! answer "yes" to the prompt</span></pre>
+
+  <h2>9.2 &nbsp;VLANs, uplink and global AAA</h2>
+<pre><span class="c">! --- VLANs (the ASWs are VTP transparent, so VLANs must exist locally) ---</span>
+vlan 20
+ name Klienter
+vlan 99
+ name Management
+vlan 555
+ name Registration
+vlan 666
+ name Jail
+vlan 999
+ name Blackhole
+!
+interface Port-channel24
+ switchport trunk allowed vlan add 555,666
+!
+<span class="c">! --- 802.1X / RADIUS (reuses the existing group SRV-RADIUS) ---</span>
+dot1x system-auth-control
+aaa authentication dot1x default group SRV-RADIUS
+aaa authorization network default group SRV-RADIUS
+aaa accounting identity default start-stop group SRV-RADIUS
+!
+radius server SRV-RADIUS-01
+ automate-tester username pf-probe ignore-acct-port idle-time 3
+radius-server dead-criteria time 5 tries 3
+radius-server deadtime 15
+radius-server vsa send authentication
+radius-server vsa send accounting
+!
+aaa server radius dynamic-author
+ client 10.0.10.16 server-key &lt;RADIUS-SECRET&gt;
+ auth-type any
+ port 3799
+!
+snmp-server community &lt;SNMP-RO&gt; RO
+lldp run</pre>
+  <div class="callout note"><b class="t">Leave these as they are</b>The existing <code>key 7 &hellip;</code> under <code>radius server SRV-RADIUS-01</code>, and the login lists <code>VTY_AUTHEN</code> / <code>VTY_AUTHOR</code>. Never add <code>aaa authentication login default group &hellip;</code>, or you'll be locked out of the console when PacketFence is down.</div>
+
+  <h2>9.3 &nbsp;Control policy (IBNS 2.0)</h2>
+  <p>This policy tries 802.1X first. If the device doesn't answer or fails, it falls back to MAB, so PacketFence can send it to registration. If PacketFence is unreachable, the port is authorized in VLAN 20.</p>
+<pre>service-template PF_CRITICAL
+ vlan 20
+!
+class-map type control subscriber match-all DOT1X_NO_RESP
+ match method dot1x
+ match result-type method dot1x agent-not-found
+class-map type control subscriber match-all DOT1X_FAILED
+ match method dot1x
+ match result-type method dot1x authoritative
+class-map type control subscriber match-all MAB_FAILED
+ match method mab
+ match result-type method mab authoritative
+class-map type control subscriber match-all AAA_DOWN
+ match result-type aaa-timeout
+ match authorization-status unauthorized
+!
+policy-map type control subscriber PF-DOT1X-MAB
+ event session-started match-all
+  10 class always do-until-failure
+   10 authenticate using dot1x priority 10
+ event authentication-failure match-first
+  5 class AAA_DOWN do-until-failure
+   10 activate service-template PF_CRITICAL
+   20 authorize
+   30 pause reauthentication
+  10 class DOT1X_NO_RESP do-until-failure
+   10 terminate dot1x
+   20 authenticate using mab priority 20
+  20 class DOT1X_FAILED do-until-failure
+   10 terminate dot1x
+   20 authenticate using mab priority 20
+  30 class MAB_FAILED do-until-failure
+   10 terminate mab
+   20 authentication-restart 60
+  40 class always do-until-failure
+   10 terminate dot1x
+   20 terminate mab
+   30 authentication-restart 60
+ event agent-found match-all
+  10 class always do-until-failure
+   10 terminate mab
+   20 authenticate using dot1x priority 10
+ event aaa-available match-all
+  10 class always do-until-failure
+   10 clear-session
+ event violation match-all
+  10 class always do-until-failure
+   10 replace
+ event inactivity-timeout match-all
+  10 class always do-until-failure
+   10 clear-session</pre>
+
+  <h2>9.4 &nbsp;Access port template</h2>
+  <p>The port settings live in an <b>interface template</b> rather than directly on the interface. Settings written directly on an interface override a template, so this is what lets PacketFence replace the whole port config for the AP (&sect;10).</p>
+<pre>template PF_ACCESS
+ description 802.1X/MAB - PacketFence
+ switchport mode access
+ switchport access vlan 555
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ dot1x pae authenticator
+ dot1x timeout tx-period 3
+ dot1x timeout quiet-period 2
+ mab
+ access-session host-mode single-host
+ access-session closed
+ access-session port-control auto
+ authentication periodic
+ authentication timer reauthenticate server
+ service-policy type control subscriber PF-DOT1X-MAB</pre>
+
+  <h2>9.5 &nbsp;Apply to the ports</h2>
+  <p>Remove the old static settings first. Otherwise they override the template.</p>
+<pre><span class="c">! --- PILOT: one free port first (Gi1/0/1) ---</span>
+default interface GigabitEthernet1/0/1
+interface GigabitEthernet1/0/1
+ source template PF_ACCESS
+ access-session interface-template sticky timer 30
+ no snmp trap link-status
+end
+
+<span class="c">! --- ROLLOUT (after the pilot in &sect;12 passes) ---</span>
+<span class="c">! Never include Gi1/0/47-48 or Po24 (uplink to the DSW).</span>
+<span class="c">! Leave out any port that must stay in VLAN 99 (see the warning at the top of &sect;9).</span>
+configure terminal
+default interface range GigabitEthernet1/0/1 - 46
+interface range GigabitEthernet1/0/1 - 46
+ source template PF_ACCESS
+ access-session interface-template sticky timer 30
+ no snmp trap link-status
+end
+write memory</pre>
+  <div class="callout note"><b class="t">Gi1/0/45 (AP port) gets the same config</b>That's intended. The AP authenticates with MAB like any other device, and PacketFence then switches the port to the AP template (&sect;10). Only use <code>default interface Gi1/0/45</code> during a maintenance window, because the AP's clients drop for about a minute.</div>
+</section>
+
+<!-- ============================ 10 ============================ -->
+<section class="chapter">
+  <h1>10 &nbsp;Automatic AP port configuration</h1>
+  <p><b>Goal:</b> when a UniFi AP is plugged into any 802.1X port (normally Gi1/0/45), the port automatically becomes a trunk with management untagged on VLAN 99 and wireless clients tagged on VLAN 20. This matches today's manual config on NW-ASW-DC1-01 Gi1/0/45.</p>
+
+  <h2>10.1 &nbsp;How it works</h2>
+  <ol>
+    <li>The port starts with template <code>PF_ACCESS</code>. The UniFi AP doesn't speak 802.1X, so after about 10 seconds the switch falls back to MAB.</li>
+    <li>PacketFence recognises the MAC as a registered node in role <code>unifi_ap</code>. The RADIUS filter <code>UNIFI_AP_TEMPLATE</code> (&sect;4.6) adds <code>Cisco-AVPair = interface-template-name=PF_UNIFI_AP</code> to the Access-Accept.</li>
+    <li>The switch binds the dynamic template <code>PF_UNIFI_AP</code> to the port. It does <b>not</b> replace <code>PF_ACCESS</code>: the two are merged, and the dynamic template wins wherever both set the same command. That is why <code>PF_UNIFI_AP</code> has to set <code>access-session host-mode multi-host</code>. With the <code>single-host</code> from <code>PF_ACCESS</code> still in force, the first Wi-Fi client behind the AP counts as a second MAC, triggers a security violation and the trunk never comes up.</li>
+    <li>Do not use <code>access-session port-control force-authorized</code> in the AP template. It ends the authentication session, the session was what bound the dynamic template, so the port falls back to <code>PF_ACCESS</code> and the whole thing loops every 40 seconds.</li>
+    <li>The port itself must carry no <code>switchport</code> commands. Settings written on the interface beat any template, so run <code>default interface</code> before <code>source template PF_ACCESS</code>. A leftover <code>switchport mode access</code> keeps the port an access port for ever.</li>
+    <li><code>access-session interface-template sticky</code> keeps the template bound while the link stays up. If the link goes down (AP unplugged), the port returns to <code>PF_ACCESS</code> after 30 seconds, so a different device in that port goes through 802.1X/MAB again.</li>
+  </ol>
+
+  <h2>10.2 &nbsp;Template on both ASWs</h2>
+<pre>template PF_UNIFI_AP
+ description UniFi AP - pushed by PacketFence
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 20,99,100
+ access-session host-mode multi-host
+ access-session port-control auto
+ spanning-tree portfast edge trunk
+ spanning-tree bpduguard enable</pre>
+  <p>Today's DC1 AP port also allows VLAN 10. Only add it (<code>allowed vlan 10,20,99</code>) if an SSID really uses VLAN 10. By default, servers shouldn't be reachable over Wi-Fi.</p>
+
+  <h2>10.3 &nbsp;Verify</h2>
+<pre>show access-session interface Gi1/0/45 details     <span class="c">! Method: mab, Status: Authorized</span>
+show template binding target Gi1/0/45             <span class="c">! PF_UNIFI_AP  dynamic</span>
+show interfaces Gi1/0/45 switchport | include Mode|Native|Trunking VLANs
+show mac address-table interface Gi1/0/45         <span class="c">! AP on 99, Wi-Fi clients on 20</span></pre>
+  <p>In PacketFence's <i>Auditing &rarr; RADIUS Audit Logs</i>, the Access-Accept for <code>9c:05:d6:ba:c1:c9</code> must contain the <code>interface-template-name</code> attribute.</p>
+
+  <h2>10.4 &nbsp;Fallback: static AP port</h2>
+  <p>If the pilot shows the dynamic template doesn't bind on your IOS release, configure the AP port statically and leave it out of 802.1X. Port security limits it to the AP's MAC:</p>
+<pre>default interface GigabitEthernet1/0/45
+interface GigabitEthernet1/0/45
+ description UniFi AP (static, excluded from NAC)
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 20,99
+ switchport port-security maximum 1 vlan access
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ switchport port-security
+ spanning-tree portfast trunk</pre>
+  <p class="muted">With port security on a trunk, the AP's own MAC is learned on the native VLAN. Wireless clients (VLAN 20) aren't limited. If you use this fallback, test it with the AP connected before you rely on it.</p>
+</section>
+
+<!-- ============================ 11 ============================ -->
+<section class="chapter">
+  <h1>11 &nbsp;Windows clients (Group Policy)</h1>
+  <p>Users sign in with 802.1X (PEAP-MSCHAPv2) using their <code>MFRACE</code> AD credentials. Deploy the settings with a GPO linked to the OUs that contain the computers:</p>
+  <table>
+    <tr><th style="width:40%">Setting</th><th>Value</th></tr>
+    <tr><td>System Services &rarr; <i>Wired AutoConfig</i> (dot3svc)</td><td>Automatic</td></tr>
+    <tr><td>Security Settings &rarr; <i>Wired Network (IEEE 802.3) Policies</i></td><td>New policy <code>MFRACE-Wired</code>, <i>Use Windows Wired Auto Config</i> enabled</td></tr>
+    <tr><td>Network authentication method</td><td>Microsoft: Protected EAP (PEAP)</td></tr>
+    <tr><td>Verify the server's identity with its certificate</td><td>Enabled. Connect to servers: <code>srv-radius-01.mfrace.internal</code></td></tr>
+    <tr><td>Trusted Root CA</td><td>Your AD CS root CA (the CA that issued the certificate in &sect;4.7)</td></tr>
+    <tr><td>Inner method</td><td>Secured password (EAP-MSCHAP v2), <i>Automatically use my Windows logon name and password</i></td></tr>
+    <tr><td>Authentication mode</td><td>User or computer authentication</td></tr>
+  </table>
+  <div class="callout note"><b class="t">Why "user or computer"</b>The computer authenticates at boot, so domain logon, GPO processing and login scripts work before a user signs in. Once the user signs in, the connection re-authenticates as that user. PacketFence gives both the <code>default</code> role (VLAN 20).</div>
+  <div class="callout warn"><b class="t">Fallback when PacketFence is unreachable</b>Without it the critical VLAN (&sect;9.3) does not help: the switch authorizes the port in VLAN 20, but Windows sees <i>Authentication failed</i> and blocks the connection itself, so the PC has an address and still reaches nothing. The setting is called <b>Fallback to unauthorized network access</b> (<code>OneXEnforced=false</code> in the profile). The GPO wired policy does <b>not</b> expose it: it only exists on the adapter's Authentication tab and in a LAN profile XML. Deploy it as a LAN profile instead: build the profile on one PC, export it with <code>netsh lan export profile</code>, and apply it at boot with a startup script (<code>netsh lan add profile filename=&hellip; interface=&hellip;</code>), or use <code>docs/wired-dot1x/New-MFRACEWiredProfile.ps1</code> from the repository, which builds the profile from the PC's own certificate store. A GPO wired policy always overrides local profiles, so remove the policy if you deploy profiles this way. Run the script elevated (SYSTEM in a startup script), otherwise you get a user profile and the machine profile needed for authentication before logon is missing.</div>
+  <div class="callout note"><b class="t">EAP-TLS or PEAP</b>Both work against this PacketFence. PEAP-MSCHAPv2 needs no client certificate, but Credential Guard (on by default in Windows 11 Enterprise/Education 22H2+) blocks single sign-on with it, and the PC then quietly falls back to MAB. EAP-TLS with a computer certificate from MFRACE-Issuing-CA avoids that and sends no passwords. Whichever you choose, use the same one everywhere, and check <code>sc query dot3svc</code>: with the Wired AutoConfig service stopped the PC never answers EAPOL at all and lands on MAB.</div>
+  <p>Devices that can't do 802.1X, such as printers, register through the captive portal, or an admin registers them by MAC in PacketFence with the role they need.</p>
+</section>
+
+<!-- ============================ 12 ============================ -->
+<section class="chapter">
+  <h1>12 &nbsp;Pilot, verification and rollout</h1>
+
+  <h2>12.1 &nbsp;Order of work</h2>
+  <table>
+    <tr><th>#</th><th>Step</th><th>Section</th><th>Risk</th></tr>
+    <tr><td>1</td><td>NetBox prefixes</td><td>&sect;3</td><td>none</td></tr>
+    <tr><td>2</td><td>PacketFence: interfaces, networks, roles, switches (ASWs in <b>Testing</b>), AP node, RADIUS filter, certificate</td><td>&sect;4</td><td>low</td></tr>
+    <tr><td>3</td><td>OPNsense DC1 + DC2 (both nodes each)</td><td>&sect;6&ndash;7</td><td>low</td></tr>
+    <tr><td>4</td><td>DSW trunks</td><td>&sect;8</td><td>low</td></tr>
+    <tr><td>5</td><td>Test VLAN 555 by hand: put a PC on an ASW port set to <code>switchport access vlan 555</code>. It must get 10.0.55.20+ and the portal.</td><td>&ndash;</td><td>none</td></tr>
+    <tr><td>6</td><td>ASW DC1: global config (&sect;9.1&ndash;9.4) + pilot port Gi1/0/1</td><td>&sect;9</td><td>medium</td></tr>
+    <tr><td>7</td><td>Pilot tests (&sect;12.2) with the switch in PacketFence mode <i>Testing</i>, then <i>Production</i></td><td>&sect;12.2</td><td>low</td></tr>
+    <tr><td>8</td><td>AP test on Gi1/0/45 (maintenance window)</td><td>&sect;10</td><td>medium</td></tr>
+    <tr><td>9</td><td>Rollout Gi1/0/1-46 on DC1</td><td>&sect;9.5</td><td>medium</td></tr>
+    <tr><td>10</td><td>Repeat steps 5&ndash;9 at DC2 (10.10.55.x via relay)</td><td>&ndash;</td><td>medium</td></tr>
+  </table>
+
+  <h2>12.2 &nbsp;Pilot tests</h2>
+  <table class="check">
+    <tr><th>&#10003;</th><th>Test</th><th>Expected result</th></tr>
+    <tr><td>&#9744;</td><td><code>test aaa group SRV-RADIUS &lt;user&gt; &lt;pass&gt; new-code</code></td><td><i>User successfully authenticated</i></td></tr>
+    <tr><td>&#9744;</td><td>Domain PC with the GPO applied, plugged into Gi1/0/1</td><td>Method dot1x, Authorized, VLAN 20, IP 10.0.20.x</td></tr>
+    <tr><td>&#9744;</td><td>Unknown device (no 802.1X)</td><td>Method mab, VLAN 555, IP 10.0.55.20+, browser opens the portal</td></tr>
+    <tr><td>&#9744;</td><td>Register the device in PacketFence (or via the portal)</td><td>CoA bounces the port. The device lands in VLAN 20 within about 10 seconds</td></tr>
+    <tr><td>&#9744;</td><td>Put the node in isolation (<i>Nodes &rarr; Apply security event</i>)</td><td>CoA &rarr; VLAN 666, IP 10.0.66.20+, only the portal reachable</td></tr>
+    <tr><td>&#9744;</td><td>Stop RADIUS on PacketFence for 2 minutes, then reconnect a PC</td><td>Port authorized by <code>PF_CRITICAL</code> in VLAN 20. Re-authenticates when RADIUS is back</td></tr>
+    <tr><td>&#9744;</td><td>SSH to the switch as <code>adm-jukn</code></td><td>Login still works (VTY lists unchanged)</td></tr>
+    <tr><td>&#9744;</td><td>UniFi AP on Gi1/0/45</td><td>Template <code>PF_UNIFI_AP</code> bound, AP online in UniFi, Wi-Fi client gets 10.0.20.x</td></tr>
+    <tr><td>&#9744;</td><td>DC2: unknown device</td><td>IP 10.10.55.20+ through the OPNsense relay, portal loads from 10.0.55.10</td></tr>
+  </table>
+
+  <h2>12.3 &nbsp;Useful commands</h2>
+<pre>show access-session                                   <span class="c">! all sessions</span>
+show access-session interface Gi1/0/1 details
+show access-session interface Gi1/0/1 policy
+show aaa servers | include SRV-RADIUS|State|Dead
+show template binding target Gi1/0/45
+debug access-session all      <span class="c">! plus: terminal monitor. Turn off with "undebug all"</span></pre>
+</section>
+
+<!-- ============================ 13 ============================ -->
+<section class="chapter">
+  <h1>13 &nbsp;Troubleshooting</h1>
+  <table>
+    <tr><th style="width:32%">Symptom</th><th style="width:34%">Likely cause</th><th>Check / fix</th></tr>
+    <tr><td>No RADIUS request reaches PacketFence</td><td>Switch not in <code>switches.conf</code>, or wrong secret</td><td>PacketFence <i>RADIUS Audit Log</i>. Check that the source IP is 10.0.99.6 or 10.10.99.6 and that the secret matches.</td></tr>
+    <tr><td>Device stays in VLAN 555 after registering</td><td>CoA blocked or wrong switch type</td><td>UDP 3799 from 10.0.10.16. Check <code>aaa server radius dynamic-author</code> and the <code>server-key</code>. Try type IOS v15.5.</td></tr>
+    <tr><td>Device in 555 gets no IP</td><td>VLAN missing on a trunk, or PacketFence DHCP not listening</td><td><code>show interfaces trunk</code> on the ASW and DSW. <code>pfcmd service pfdhcp status</code>. At DC2, check the relay and firewall rule 1.</td></tr>
+    <tr><td>802.1X fails and the device ends up in 555</td><td>Certificate not trusted, or wrong server name in the GPO</td><td>Windows event log <i>Wired-AutoConfig</i>. PacketFence <i>RADIUS Audit Log</i> &rarr; EAP reason.</td></tr>
+    <tr><td>802.1X fails with an AD error</td><td>Domain join / ntlm_auth</td><td><i>Configuration &rarr; Policies &rarr; Domains</i> &rarr; <i>Test join</i>. Check time sync with srv-adds-01/02.</td></tr>
+    <tr><td>AP port stays an access port in VLAN 99</td><td>Template not returned or not bound</td><td>Access-Accept in the audit log. <code>show template binding</code>. Is there interface config overriding the template (&sect;9.5 <code>default interface</code>)?</td></tr>
+    <tr><td>AP port flaps between trunk and access</td><td><code>sticky</code> missing</td><td><code>access-session interface-template sticky timer 30</code> on the interface.</td></tr>
+    <tr><td>Everyone in VLAN 20 while PacketFence is healthy</td><td>Switch marked RADIUS as dead</td><td><code>show aaa servers</code>. Does the <code>automate-tester</code> user <code>pf-probe</code> get a response?</td></tr>
+  </table>
+</section>
+
+<!-- ============================ 14 ============================ -->
+<section class="chapter">
+  <h1>14 &nbsp;Rollback</h1>
+  <h3>Single port (fast)</h3>
+<pre>default interface GigabitEthernet1/0/X
+interface GigabitEthernet1/0/X
+ switchport mode access
+ switchport access vlan 99</pre>
+  <h3>Whole switch, keeping IBNS 2.0</h3>
+<pre>default interface range GigabitEthernet1/0/1 - 46
+interface range GigabitEthernet1/0/1 - 46
+ switchport mode access
+ switchport access vlan 99
+<span class="c">! restore Gi1/0/45 AP trunk as in &sect;10.4</span></pre>
+  <h3>Full restore (back to legacy mode)</h3>
+<pre>copy flash:pre-dot1x.cfg startup-config
+reload</pre>
+  <h3>PacketFence</h3>
+<pre>tar xzf /root/pf-conf-&lt;date&gt;.tgz -C /
+/usr/local/pf/bin/pfcmd configreload hard</pre>
+  <p>OPNsense: <i>System &rarr; Configuration &rarr; History</i> &rarr; revert to the revision before the change, on both nodes.</p>
+</section>
+
+<!-- ============================ A ============================ -->
+<section class="chapter">
+  <h1>Appendix C &nbsp;Changes in version 1.1</h1>
+  <p>Corrections after the rollout at both sites. Each one cost time during the pilot, so they are listed with the symptom they caused.</p>
+  <table>
+    <tr><th style="width:22%">Section</th><th style="width:39%">Change</th><th>Symptom it caused</th></tr>
+    <tr><td>&sect;4.2 Networks</td><td>Layer 2 networks always use PacketFence's own IP as the client gateway; the field only exists for routed networks</td><td>The gateway named in v1.0 could not be found in the UI</td></tr>
+    <tr><td>&sect;4.5 AD source</td><td>Realms <code>MFRACE</code> / <code>mfrace.internal</code> with <i>Strip on RADIUS authorization</i>, and <code>dNSHostName</code> in the search attributes</td><td>802.1X users and computers were rejected ("no role computed by any sources"), and every PC fell back to MAB and VLAN 555</td></tr>
+    <tr><td>&sect;4.6 RADIUS filter</td><td>Answer syntax is <code>Cisco-AVPair = &hellip;</code>, not <code>=&gt;</code></td><td>The switch received <code>"&gt; interface-template-name=&hellip;"</code> and ignored it, so the AP port stayed an access port</td></tr>
+    <tr><td>&sect;10 AP template</td><td><code>multi-host</code> + <code>port-control auto</code>; templates merge rather than replace; no <code>switchport</code> commands on the interface; <code>force-authorized</code> causes a loop</td><td>The trunk stayed operationally down, Wi-Fi clients caused security violations, and one variant re-authenticated every 40 seconds</td></tr>
+    <tr><td>&sect;11 Windows</td><td><i>Fallback to unauthorized network access</i> via a LAN profile, plus a note on <code>dot3svc</code> and on EAP-TLS vs PEAP</td><td>With PacketFence down the port was authorized in VLAN 20 but Windows blocked the connection; on another PC the stopped service meant no EAPOL at all</td></tr>
+    <tr><td>&sect;12 Isolation test</td><td>A CoA re-authenticates without bouncing the port, so Windows keeps its old address for up to about a minute; the built-in <i>Generic</i> event lets the user release themselves (set <i>Max enable</i> to 0)</td><td>The isolated PC appeared not to move to VLAN 666, then let itself out of isolation</td></tr>
+  </table>
+  <p>Also added since v1.0: guest VLAN 100 (192.168.100.0/24 per site, internet only, kept apart in NetBox by the VRFs GUEST-DC1 / GUEST-DC2) and the switch standard <code>exec-timeout 15 0</code> on the console and all VTY lines.</p>
+</section>
+
+<section class="chapter">
+  <h1>Appendix A &nbsp;Other findings from the audit</h1>
+  <p>These were found during the audit. They don't block the 802.1X rollout, but they're worth fixing.</p>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:35%">Finding</th><th>Recommendation</th></tr>
+    <tr><td>1</td><td>SRV-PKI-01 (VM 110) is stopped</td><td>Check whether it's intentional. It could be an offline root CA. Certificate requests must go to SRV-PKI-02.</td></tr>
+    <tr><td>2</td><td>OPNsense DC1 alias <code>OD_ALL_VLANs</code> leaves out 10.10.10.0/24</td><td>Only affects the legacy <code>enc0</code> rules (<code>ipsec10</code> passes everything). Add it for consistency.</td></tr>
+    <tr><td>3</td><td>NW-DSW-DC2 uses the legacy <code>radius-server host 10.0.10.16</code> syntax. DC1 uses <code>radius server</code></td><td>Align on the <code>radius server</code> block the next time you touch it.</td></tr>
+    <tr><td>4</td><td>NW-DSW-DC2 is VTP <b>server</b> with an empty domain. The DC1 DSW is transparent</td><td>Set <code>vtp mode transparent</code> for consistency and to avoid accidental VLAN changes.</td></tr>
+    <tr><td>5</td><td>DSWs run <code>spanning-tree mode pvst</code>, the ASWs run <code>rapid-pvst</code></td><td>Move the DSWs to rapid-pvst in a maintenance window.</td></tr>
+    <tr><td>6</td><td>Repository configs (<code>Cisco/*/*.ios</code>) differ from the live devices (AAA, AP port, versions)</td><td>After the rollout, export the running configs to the repository. Remove the plaintext <code>cisco</code> passwords from the repository files.</td></tr>
+    <tr><td>7</td><td>PacketFence default realms point at domain <code>mfrace</code></td><td>OK as it is. Users can sign in as <code>user</code>, <code>MFRACE\user</code> or <code>user@mfrace.internal</code>.</td></tr>
+    <tr><td>8</td><td>Management SSH to OPNsense and PacketFence uses the root account</td><td>Create personal admin accounts and turn off root login over SSH.</td></tr>
+  </table>
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="chapter">
+  <h1>Appendix B &nbsp;Implementation checklist</h1>
+  <table class="check">
+    <tr><th>&#10003;</th><th>Task</th><th>Owner</th><th>Date</th></tr>
+    <tr><td>&#9744;</td><td>Backups: PacketFence conf tarball, OPNsense config (both sites), <code>flash:pre-dot1x.cfg</code> on both ASWs</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>NetBox: 4 new prefixes, old prefixes deleted, VLAN name fixed</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>PacketFence: eth1/eth2 re-addressed, 4 networks created</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>PacketFence: switch group VLANs, CoA, types, sample entries deleted</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>PacketFence: role <code>unifi_ap</code>, AP nodes registered (DC1 + DC2)</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>PacketFence: RADIUS filter <code>UNIFI_AP_TEMPLATE</code></td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>PacketFence: AD rule, connection profile <code>wired-dot1x</code></td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>PacketFence: RADIUS certificate from AD CS</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>OPNsense DC1: VLANs + interfaces (both nodes), VIPs, aliases, rules, HA sync</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>OPNsense DC2: as DC1, plus DHCRelay PF-REG / PF-JAIL</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>DSW DC1: Po45 + 555,666</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>DSW DC2: Po45, Po47, Po48 + 555,666</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>GPO <code>MFRACE-Wired</code> linked and tested on one PC</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>ASW DC1: IBNS 2.0, global config, templates, pilot port</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>Pilot tests &sect;12.2 passed (DC1)</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>ASW DC1: rollout Gi1/0/1-46, PacketFence mode Production</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>ASW DC2: same as DC1, pilot tests passed</td><td></td><td></td></tr>
+    <tr><td>&#9744;</td><td>Repository updated with the new running configs</td><td></td><td></td></tr>
+  </table>
+</section>
+
+</body>
+</html>
