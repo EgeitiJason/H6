@@ -37,7 +37,11 @@ if (-not (Test-Path 'D:\')) { throw 'D: does not exist - bring the data disk onl
 function Set-FolderAcl {
     param([string]$Path, [string[]]$Grant)
     if (-not (Test-Path $Path)) { New-Item -Path $Path -ItemType Directory | Out-Null }
-    icacls.exe $Path /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" "$Domain\SG-FileServer-Admins:(OI)(CI)F" @Grant | Out-Null
+    icacls.exe $Path /inheritance:r /grant:r `
+        "*S-1-5-18:(OI)(CI)F" `
+        "*S-1-5-32-544:(OI)(CI)F" `
+        "$Domain\SG-FileServer-Admins:(OI)(CI)F" `
+        @Grant | Out-Null
     if ($LASTEXITCODE) { throw "icacls failed on $Path granting $Grant (exit $LASTEXITCODE) - does it exist in AD?" }
 }
 
