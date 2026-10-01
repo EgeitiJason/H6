@@ -38,16 +38,15 @@ $Existing = @{}
 Get-ADUser -Filter * | ForEach-Object { $Existing[$_.SamAccountName] = $true }
 
 foreach ($User in $Users) {
+    # If the user already exists, skip it.
+    if ($Existing[$User.sam]) {
+        continue
+    }
     # Reapplied on every run, so a user created by a run that died still ends
     # up complete. The password is only ever set at creation.
     $Attributes = @{
         Department = $User.department
         Title      = $User.title
-    }
-    if ($Existing[$User.sam]) {
-        # The home attributes would map H: ahead of the GPO; it owns H: now.
-        Set-ADUser -Identity $User.sam @Attributes -Clear homeDrive, homeDirectory
-        continue
     }
     $Name = "$($User.given_name) $($User.surname)"
     New-ADUser @Attributes -Name $Name -DisplayName $Name `
