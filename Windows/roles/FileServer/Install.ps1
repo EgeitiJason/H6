@@ -63,7 +63,7 @@ if (-not (Test-Path $Base)) {
 $Shares = @(
     @{ Name = 'Faelles';    Grant = "$Domain\Domain Users:(OI)(CI)M"; AccessBased = $false }
     @{ Name = 'Afdelinger'; Grant = "$Domain\Domain Users:RX";        AccessBased = $true }
-    @{ Name = 'Privat';     Grant = @("$Domain\Domain Users:(RD,X,RA,REA,RC,S,AD)", '*S-1-3-0:(OI)(CI)(IO)M'); AccessBased = $true }
+    @{ Name = 'Privat';     Grant = @("$Domain\Domain Users:AD", '*S-1-3-0:(OI)(CI)(IO)M', '*S-1-3-4:(OI)(CI)(IO)M'); AccessBased = $true }
 )
 
 foreach ($Share in $Shares) {
